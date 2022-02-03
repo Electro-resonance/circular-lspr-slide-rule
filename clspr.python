@@ -1,0 +1,469 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# =============================================================================
+# Created By  : Martin Timms
+# Created Date: Thursday 3rd February 2022
+# Project: https://github.com/Electro-resonance/circular-lspr-slide-rule
+# Description: Circular Lograithmic Slide Rule for Physical Constants
+# Extended to angular displays for geometric exploration using 
+# 2 ATAN(Ln(_)/19 SQRT(2))
+# =============================================================================
+
+# =============================================================================
+# Package requirements:
+# =============================================================================
+#python3.7
+#sudo easy_install-3.7 pygame
+#sudo easy_install-3.7 pyopengl
+
+# =============================================================================
+# Useful Links
+# =============================================================================
+# Colour chart: https://htmlcolorcodes.com/color-chart/material-design-color-chart/
+# OpenGL intro: https://stackabuse.com/brief-introduction-to-opengl-in-python-with-pyopengl/
+# CSV reader: https://docs.python.org/3/library/csv.html
+# Circle examples: https://stackoverflow.com/questions/25423268/i-have-created-a-circle-from-lines-in-opengl-but-it-shows-holes-at-outer-edges
+
+# =============================================================================
+# Imports
+# =============================================================================
+import pygame
+from pygame.locals import *
+from OpenGL.GL import *
+from OpenGL.GLU import *
+from OpenGL.GLUT import *
+import math
+import sys
+import csv
+
+log_mode=0
+factor=19*math.sqrt(2)
+constants=[]
+
+math_e=math.exp(1)
+math_phi=(1+math.sqrt(5))/math.sqrt(2)
+pi=math.pi
+
+# =============================================================================
+# CSV Reader Function                                 
+# ============================================================================= 
+
+def read_csv():
+  global constants
+  constants=[]
+  with open('constants.csv', 'r', newline='',encoding='utf16') as csvfile:
+     reader = csv.DictReader(csvfile)
+
+     #Read lines from the csv file
+     for row in reader:
+        const_name=row['description']
+        log_const=float(row['log'])
+        symbol=row['symbol'].strip()
+        geo=row['geometry']
+        print(const_name,log_const,geo,symbol,len(symbol))
+
+        if geo and geo.isdigit():
+           geometry=float(row['geometry'])
+        else:
+           geometry=0
+
+        if log_mode==0:
+            angle=2 * math.atan(log_const/factor)
+            angle_deg=angle/math.pi*180
+        else:
+            angle_deg=log_const/factor
+            if(const_name.find("+/- Infinity")!=-1):
+                angle_deg=180
+
+        #Colours based on angle of the constants
+        const_colour=[0.2,0.2,0.2]
+        if (int((angle_deg+0.001)/72)):
+           const_colour[2]=0.1
+        else:
+           const_colour[2]=0.0
+        if (int((angle_deg+0.001)/90)):
+           const_colour[0]=0.5
+        else:
+           const_colour[0]=0
+
+        #Find some keywords and add colours related to the constant type
+        if (const_name.find("eed")!=-1):#"Speed"
+           const_colour=[1,1,1]
+        if (const_name.find("Electric")!=-1):
+           const_colour=[1,0,1]
+        if (const_name.find("Gravit")!=-1):
+           const_colour=[0,1,1]
+        if (const_name.find("Period")!=-1 or const_name.find("Frequency")!=-1 or int(angle_deg*10)==0):
+           const_colour=[1,1,0]
+        if (geometry>0):
+           const_colour=[0.9,0.9,0.9]
+
+        #Create a list of constants
+        const=(const_name,log_const,angle_deg,const_colour,geometry,symbol)
+        constants.append(const)
+
+# =============================================================================
+# Constant List Modification Function
+# =============================================================================
+
+def adjust_factors():
+    for idx in range(len(constants)):
+        (const_name,log_const,angle_deg,const_colour,geometry,symbol)= constants[idx]
+        if log_mode==0:
+            angle=2 * math.atan(log_const/factor)
+            angle_deg=angle/math.pi*180
+        else:
+            angle_deg=log_const/factor
+            if(const_name.find("+/- Infinity")!=-1):
+                angle_deg=180
+        constants[idx]=(const_name,log_const,angle_deg,const_colour,geometry,symbol)
+
+ 
+# =============================================================================
+# 3D Text Printing Functions   
+# =============================================================================
+
+def drawText(x, y, text):                                                
+    textSurface = font.render(text, True, (255, 255, 66, 255)).convert_alpha()
+    textData = pygame.image.tostring(textSurface, "RGBA", True)
+    glWindowPos2d(x, y)
+    glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
+       
+
+def drawTextRadialRaster(r,angle, text):
+    x = r * math.cos(angle/180*math.pi)
+    y = r * math.sin(angle/180*math.pi)
+    textSurface = font.render(text, True, (255, 255, 66, 255)).convert_alpha()
+    textData = pygame.image.tostring(textSurface, "RGBA", True)
+    glRasterPos(x,y)
+    glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
+
+def label(x, y, s, angle, dir, scale,colour):
+     glPushMatrix()
+     glColor(colour)
+     glTranslatef(x, y, 0.0)
+     glScalef(scale, scale, scale)
+     glRotatef(angle, 0, 0, 1);
+     for c in s:
+         glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(c))
+         width=glutStrokeWidth(GLUT_STROKE_ROMAN, ord(c))
+     glPopMatrix()
+
+def label_length(s):
+     str_len=0
+     for c in s:
+        str_len+=glutStrokeWidth(GLUT_STROKE_ROMAN, ord(c))
+     return str_len
+
+def drawTextRadial(r,angle, text,scale,colour):
+    text_angle=angle
+    dir=0
+    if (angle>90 or angle<-90):
+         text_angle-=180
+         dir=1
+         len=label_length(text)
+         r+=len*scale
+    x = r * math.cos(angle/180*math.pi)
+    y = r * math.sin(angle/180*math.pi)
+    label(x, y, text, text_angle, dir, scale,colour)
+
+
+# =============================================================================
+# 3D Drawing Functions  
+# =============================================================================
+
+def draw_radial(radius1,radius2, height, num_slices,width,offset,colour,ang_width):
+    r1 = radius1
+    r2 = radius2
+    h = height
+    n = float(num_slices)
+    c = colour
+    rw = width
+    of = offset
+
+    z = -h/2.0
+    angle = offset/180*math.pi
+    width1=ang_width/180*math.pi
+    for i in range(int(n)):
+        angle = 2 * math.pi * (i/n)/rw + offset/180*math.pi
+        x1 = r1 * math.cos(angle + width1)
+        y1 = r1 * math.sin(angle + width1)
+        x2 = r1 * math.cos(angle)
+        y2 = r1 * math.sin(angle)
+        x3 = r2 * math.cos(angle)
+        y3 = r2 * math.sin(angle)
+        x4 = r2 * math.cos(angle + width1) 
+        y4 = r2 * math.sin(angle + width1)
+
+        glBegin(GL_QUADS)#draw a quadrangle for the radial arm
+        glColor(c)
+        glVertex(x1, y1, z)
+        glVertex(x2, y2, z)
+        glVertex(x3, y3, z)
+        glVertex(x4, y4, z)
+        glVertex(x1, y1, z)
+        glEnd()
+
+def draw_circle(radius1,radius2, height, num_slices,width,offset,colour):
+    r1 = radius1
+    r2=radius2
+    h = height
+    n = float(num_slices)
+    c = colour
+    rw = width
+    of = offset
+
+    glBegin(GL_TRIANGLE_FAN)#draw the circle
+    glColor(c)
+    z = -h/2.0
+    for i in range(int(n) + 1):
+        angle = 2 * math.pi * (i/n)
+        x1 = r1 * math.cos(angle)
+        y1 = r1 * math.sin(angle)
+        x2 = r2 * math.cos(angle)
+        y2 = r2 * math.sin(angle)
+        glVertex(x2, y2, z)
+    glEnd()
+
+
+# =============================================================================
+# Update screen
+# =============================================================================
+
+def update_display():
+    glClear(GL_COLOR_BUFFER_BIT)
+    glClear(GL_DEPTH_BUFFER_BIT)
+    glEnable(GL_DEPTH_TEST)
+
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    gluPerspective(30, float(width)/height, 1, 100)
+    glMatrixMode(GL_MODELVIEW)
+    glLoadIdentity()
+    if (zoom_location==-1000):
+        glTranslate(0, 0, -50)#move back far enough to see this object
+    else:
+        zoom_radius=12
+        zoom_angle=zoom_location
+        x_zoom = zoom_radius * math.cos(zoom_angle/180*math.pi)
+        y_zoom = zoom_radius * math.sin(zoom_angle/180*math.pi)
+        glTranslate(x_zoom, y_zoom, -20)
+
+    #TODO: This is the factor used for ATAN mode.
+    #Needs a more meaningful display
+    drawText(20,40,str(factor) )
+
+    if(log_mode==0):
+       intensity=500
+       #Draw geometric shapes for the ATAN scales to investigate angular alignments.
+       draw_circle(1,8,0.1,3,360,5,[106/intensity,27/intensity,154/intensity])#TRIANGLE
+       draw_circle(1,8,0.2,4,360,5,[0/intensity,150/intensity,136/intensity])#SQUARE
+       draw_circle(1,8,0.3,5,360,5,[158/intensity,157/intensity,36/intensity])#PENTAGON
+       draw_circle(1,8,0.4,7,360,5,[51/intensity, 105/intensity, 30/intensity])#HEPTAGON
+    else:
+     #Draw a pointer when in log mode
+     glPushMatrix()
+     glTranslatef(7, 0, 0.0)
+     draw_circle(1,1,0.1,3,360,5,[1,1,1])#TRIANGLE
+     glPopMatrix()
+
+    draw_circle(1,8,0.4,7,360,5,[0.1,0,0.1])#Octagon Inner Background
+    draw_circle(12,13.5,0.5,11,360,5,[0.1,0,0.1])#Hendecagon Outer Background
+
+
+    slice=1
+    hght=0.2
+    wd=800
+    overlap=0.05
+
+
+    #Marker for 23 degrees which is maximum angle for polarisation entanglement
+    draw_radial(13,15,hght,30,wd,23+120,[1,1,0],0.5)
+    draw_radial(13,15,hght,30,wd,120,[1,1,0],0.5)
+
+    #Marker for 23 degrees which is maximum angle for polarisation entanglement
+    draw_radial(13,15,hght,30,wd,90,[1,1,0],0.5)
+    draw_radial(13,15,hght,30,wd,90+23,[1,1,0],0.5)
+
+    for (const_name,log_const,angle_deg,const_colour,geometry,symbol) in constants:
+       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0)):
+           draw_radial(8,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,0.5)
+           draw_radial(10-overlap,12,hght,slice,wd,angle_deg,const_colour,0.5)
+           draw_radial(9,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,0.5)
+
+       if(geometry>0 and geometry<6):
+          drawTextRadialRaster(12.5,angle_deg, const_name)
+          rad_len=13
+       else:
+          rad_len=12
+
+       if (zoom_location>-1000 or disp_symbol==3):
+          text_offset=0.3
+          if (disp_symbol==0):
+              drawTextRadial(12+text_offset,angle_deg, const_name,0.0015,yellow)
+              drawTextRadial(10+text_offset,angle_deg-rotation/5, const_name,0.0015,yellow)
+              #Thicken tex
+              drawTextRadial(12.01+text_offset,angle_deg+0.01, const_name,0.0015,yellow)
+              drawTextRadial(10.01+text_offset,angle_deg-rotation/5+0.01, const_name,0.0015,yellow)
+          else:
+              drawTextRadial(12+text_offset,angle_deg, symbol,0.0015,yellow)
+              drawTextRadial(10+text_offset,angle_deg-rotation/5,symbol,0.0015,yellow)
+
+      
+       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0)):
+          #Draw outer circle
+          draw_radial(11-overlap,rad_len,hght,slice,wd,angle_deg,const_colour,0.5)
+
+    pygame.display.flip()
+
+# =============================================================================
+# Help Banner
+# =============================================================================
+
+def print_help():
+   print("** Circular logarithmic slide rule for fundamental physical constants **")
+   print()
+   print(" z,x = rotate the inner slide rule wheel")
+   print(" q = return to 0 degree rotation point")
+   print(" w = return to -180 degree rotation point")
+   print(" e = cancel zoom")
+   print(" 1,2,3,4,5,6,7,8,9,0 = zoom on sectors of the circular slide rule")
+   print(" d = display basic symbols")
+   print(" f = display all symbols")
+   print(" g = display basic symbols when not zoomed")
+   print(" a = natural log mode")
+   print(" s = arctangent natural log mode")
+   print()
+   print( "r,t,y,u,i - experimental scaling factors")
+
+
+   print(" ")
+   print(" k,l = course adjust factor for ARCTAN scaling")
+   print(" n,m = fine adjust factor for ARCTAN scaling")
+
+# =============================================================================
+# Main Code
+# =============================================================================
+
+read_csv() # Read the fundamental constants into a list
+print_help()
+
+pygame.init()
+(width, height) = (1080,800) #(800, 600)
+screen = pygame.display.set_mode((width, height), OPENGL | DOUBLEBUF)
+clock = pygame.time.Clock()
+font = pygame.font.SysFont('arial', 12)
+glEnable(GL_BLEND)
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+rotation = 0.0
+rotate=1
+zoom_location=-1000
+disp_symbol=1
+yellow=[1,1,0]
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    keypress = pygame.key.get_pressed()
+    req_update=True
+
+    #TODO: This becomes a case statement in Python3.10
+    if keypress[pygame.K_z]:
+       rotation += 1.0
+       rotate=0
+    elif keypress[pygame.K_x]:
+       rotation -= 1.0
+       rotate=0
+    elif keypress[pygame.K_q]:
+       rotation = 0.0
+       rotate=0
+       zoom_location=-1000
+    elif keypress[pygame.K_w]:
+       rotation = 180.0*5
+       rotate=0
+       zoom_location=-1000
+    elif keypress[pygame.K_e]:
+       zoom_location=-1000
+    elif keypress[pygame.K_s]:
+       factor=19*math.sqrt(2)
+       log_mode=0
+       adjust_factors()
+    elif keypress[pygame.K_r]:
+       factor=9.5*math.sqrt(2)
+       log_mode=0
+       adjust_factors()
+    elif keypress[pygame.K_t]:
+       factor=19*math.sqrt(2)
+       log_mode=0
+       adjust_factors()
+    elif keypress[pygame.K_y]:
+       factor=57.206
+       log_mode=0
+       adjust_factors()
+    elif keypress[pygame.K_u]:
+       factor=(30)*math.sqrt(5)
+       log_mode=0
+       adjust_factors()
+    elif keypress[pygame.K_i]:
+       factor=82.37
+       log_mode=0
+       adjust_factors()
+    elif keypress[pygame.K_a]:
+       log_mode=1
+       factor=1
+       adjust_factors()
+    elif keypress[pygame.K_k]:
+       factor+=0.1
+       adjust_factors()
+    elif keypress[pygame.K_l]:
+       factor-=0.1
+       adjust_factors()
+    elif keypress[pygame.K_n]:
+       factor+=0.01
+       adjust_factors()
+    elif keypress[pygame.K_m]:
+       factor-=0.01
+       adjust_factors()
+    elif keypress[pygame.K_1]:
+       zoom_location=0
+    elif keypress[pygame.K_2]:
+       zoom_location=30
+    elif keypress[pygame.K_3]:
+       zoom_location=-30
+    elif keypress[pygame.K_4]:
+       zoom_location=90
+    elif keypress[pygame.K_5]:
+       zoom_location=-90
+    elif keypress[pygame.K_6]:
+       zoom_location=120
+    elif keypress[pygame.K_7]:
+       zoom_location=-120
+    elif keypress[pygame.K_8]:
+       zoom_location=144
+    elif keypress[pygame.K_9]:
+       zoom_location=-144
+    elif keypress[pygame.K_0]:
+       zoom_location=180
+    elif keypress[pygame.K_d]:
+       disp_symbol=0
+    elif keypress[pygame.K_f]:
+       disp_symbol=1
+    elif keypress[pygame.K_g]:
+       disp_symbol=3
+    else:
+       #Only rotate if no keys pressed
+       rotation += rotate
+       if (int(rotate*1000)!=0):
+         req_update=True
+       else:
+         req_update=False
+
+    if (req_update):
+       update_display()
+
+    clock.tick(60)
+    pygame.event.pump() # process event queue

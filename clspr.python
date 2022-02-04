@@ -41,7 +41,7 @@ factor=19*math.sqrt(2)
 constants=[]
 
 math_e=math.exp(1)
-math_phi=(1+math.sqrt(5))/math.sqrt(2)
+math_phi=(1+math.sqrt(5))/2
 pi=math.pi
 
 # =============================================================================
@@ -334,7 +334,8 @@ def print_help():
    print(" a = natural log mode")
    print(" s = arctangent natural log mode")
    print()
-   print( "r,t,y,u,i - experimental scaling factors")
+   print(" r,t,y,u,i - experimental arc tangent scaling factors")
+   print(" h,j,k,l - experimental natural log scaling factors")
 
 
    print(" ")
@@ -414,7 +415,23 @@ while True:
        adjust_factors()
     elif keypress[pygame.K_a]:
        log_mode=1
-       factor=1
+       factor=1.0
+       adjust_factors()
+    elif keypress[pygame.K_h]:
+       log_mode=1
+       factor=0.75
+       adjust_factors()
+    elif keypress[pygame.K_j]:
+       log_mode=1
+       factor=1/math.sqrt(2)
+       adjust_factors()
+    elif keypress[pygame.K_k]:
+       log_mode=1
+       factor=1/math_phi
+       adjust_factors()
+    elif keypress[pygame.K_l]:
+       log_mode=1
+       factor=0.5
        adjust_factors()
     elif keypress[pygame.K_k]:
        factor+=0.1

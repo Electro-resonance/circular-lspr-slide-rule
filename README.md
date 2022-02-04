@@ -4,7 +4,7 @@ and the principles of Each One Teach One (EOTO).
 
 The circular slide rule allows exploration of logarithmic and geometric relationships between the physical fundamental constants. Orest discovered a method described in his '1' books to derive all of the constants from just five seed constants which are based on experimental physical measurements (from international agreed physical CODATA). The derived constants are then in some cases to a greater accuracy than is possible with experimental measurement. The work of Orest suggests a deeper connection in nature between the constants and hint at an underlying geometry of the universe. 
 
-The inspiration for this project was formed at an Each One Teach One EOTO retreat in 2018 whereby after the project founder gave a science talk. Following the talk the founder of this project made a promise to continue the fundamental constants work and spread the scientific message.
+The inspiration for this project was formed at an Each One Teach One EOTO retreat in 2018 whereby after the project founder (Martin Timms) gave a science talk to the retreat attendees revealing discoveries related to mapping the fundamental constants onto a unit circle and the significance and understanding that can be gained from doing so. Following the talk, Martin made a promise to continue the fundamental constants work and spread the message about Orest's scientific and fundamental physics research.
 
 
 The circular logarithmic slide rule for fundamental physical constants allows plotting fundamental physical constants using arctangent and logarithmic projections onto circular wheels forming a slide rule.
@@ -24,8 +24,8 @@ i) Orest Bedrij ‘1’: The Ultimate Foundation of Nature https://books.google.
 
 ii) Orest Bedrij "New Relationships and Measurements for Gravity Physics" https://www.slac.stanford.edu/econf/C0107094/papers/Bedrij589-601.pdf
 
-ii) Orest Bedrij "REVELATION AND VERIFICATION OF ULTIMATE REALITY AND MEANING THROUGH DIRECT EXPERIENCE AND THE LAWS OF PHYSICS " https://www.utpjournals.press/doi/pdf/10.3138/uram.23.1.36
+iii) Orest Bedrij "REVELATION AND VERIFICATION OF ULTIMATE REALITY AND MEANING THROUGH DIRECT EXPERIENCE AND THE LAWS OF PHYSICS " https://www.utpjournals.press/doi/pdf/10.3138/uram.23.1.36
 
-iii) CODATA - https://codata.org/initiatives/data-science-and-stewardship/fundamental-physical-constants/
+iv) CODATA - https://codata.org/initiatives/data-science-and-stewardship/fundamental-physical-constants/
 
-iv) CODATA - https://pml.nist.gov/cuu/pdf/wall_2018.pdf
+v) CODATA - https://pml.nist.gov/cuu/pdf/wall_2018.pdf

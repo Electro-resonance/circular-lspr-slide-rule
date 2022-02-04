@@ -50,6 +50,8 @@ math_e=math.exp(1)
 math_phi=(1+math.sqrt(5))/2
 pi=math.pi
 
+zooming=True
+
 # =============================================================================
 # CSV Reader Function                                 
 # ============================================================================= 
@@ -224,6 +226,37 @@ def draw_circle(r1,r2, h, num_slices,width,offset,colour):
 # Update screen
 # =============================================================================
 
+zoom_pos=[0,0,-100]
+zoom_set=[0,0,-50]
+
+def update_zoom():
+   global zoom_set
+   global zoom_pos
+   global zooming
+   global zooming
+   if (zoom_location==-1000):
+        #move back far enough to see this object
+        zoom_set=[0,0,-50]
+   else:
+        zoom_radius=10
+        zoom_angle=zoom_location
+        zoom_set = [zoom_radius * math.cos(zoom_angle/180*math.pi) , zoom_radius * math.sin(zoom_angle/180*math.pi) , zoom_distance]
+
+   zooming=False
+   dist=0
+   for dimension in range(3):
+        if (zoom_pos[dimension]!=zoom_set[dimension]):
+            zooming=True #Flag that we are still zooming
+        zoom_pos[dimension]=(7*zoom_pos[dimension]+zoom_set[dimension])/8 #Weighted rolling average§
+        dist+=abs(zoom_pos[dimension]-zoom_set[dimension]) #Add up amount of movement needed
+
+   #Check if we are nearly at destination zoom position
+   if dist<0.01:
+       zoom_pos=zoom_set
+
+   glTranslate(zoom_pos[0], zoom_pos[1], zoom_pos[2])
+
+
 def update_display():
     glClear(GL_COLOR_BUFFER_BIT)
     glClear(GL_DEPTH_BUFFER_BIT)
@@ -234,14 +267,7 @@ def update_display():
     gluPerspective(30, float(width)/height, 1, 100)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    if (zoom_location==-1000):
-        glTranslate(0, 0, -50)#move back far enough to see this object
-    else:
-        zoom_radius=10
-        zoom_angle=zoom_location
-        x_zoom = zoom_radius * math.cos(zoom_angle/180*math.pi)
-        y_zoom = zoom_radius * math.sin(zoom_angle/180*math.pi)
-        glTranslate(x_zoom, y_zoom, zoom_distance)
+    update_zoom()
 
     #TODO: This is the factor used for ATAN mode.
     #Needs a more meaningful display
@@ -297,9 +323,6 @@ def update_display():
           if (disp_symbol==0):
               drawTextRadial(12+text_offset,angle_deg, const_name,0.0015,yellow)
               drawTextRadial(10+text_offset,angle_deg-rotation/5, const_name,0.0015,yellow)
-              #Thicken tex
-              drawTextRadial(12.01+text_offset,angle_deg+0.01, const_name,0.0015,yellow)
-              drawTextRadial(10.01+text_offset,angle_deg-rotation/5+0.01, const_name,0.0015,yellow)
           else:
               drawTextRadial(12+text_offset,angle_deg, symbol,0.0015,yellow)
               drawTextRadial(10+text_offset,angle_deg-rotation/5,symbol,0.0015,yellow)
@@ -499,7 +522,7 @@ while True:
        else:
          req_update=False
 
-    if (req_update):
+    if (req_update or zooming):
        update_display()
 
     clock.tick(60)

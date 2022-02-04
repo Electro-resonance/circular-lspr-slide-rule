@@ -246,6 +246,7 @@ def update_display():
     #TODO: This is the factor used for ATAN mode.
     #Needs a more meaningful display
     drawText(20,40,str(factor) )
+    drawText(20,20,str(zoom_distance) )
 
     if(log_mode==False):
        intensity=500
@@ -476,18 +477,18 @@ while True:
     elif keypress[pygame.K_b]:
        demo_mode=False
        rotate=0
-    elif keypress[pygame.K_c]:
-       if (zoom_location!=-1000):
-          zoom_distance=zoom_distance+1
-          if(zoom_distance>10):
-             zoom_distance=-1000
-       else:
-          zoom_location=180
     elif keypress[pygame.K_d]:
        if (zoom_location!=-1000):
+          zoom_distance=zoom_distance+1
+          if(zoom_distance>-8):
+             zoom_distance=-8
+       else:
+          zoom_location=180
+    elif keypress[pygame.K_c]:
+       if (zoom_location!=-1000):
           zoom_distance=zoom_distance-1
-          if(zoom_distance>10):
-             zoom_distance=-100
+          if(zoom_distance<-99):
+             zoom_distance=-99
        else:
           zoom_location=180
     else:

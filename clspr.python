@@ -36,7 +36,8 @@ import math
 import sys
 import csv
 
-log_mode=0
+demo_mode=False
+log_mode=False
 factor=19*math.sqrt(2)
 constants=[]
 
@@ -67,7 +68,7 @@ def read_csv():
         else:
            geometry=0
 
-        if log_mode==0:
+        if log_mode==False:
             angle=2 * math.atan(log_const/factor)
             angle_deg=angle/math.pi*180
         else:
@@ -109,7 +110,7 @@ def read_csv():
 def adjust_factors():
     for idx in range(len(constants)):
         (const_name,log_const,angle_deg,const_colour,geometry,symbol)= constants[idx]
-        if log_mode==0:
+        if log_mode==False:
             angle=2 * math.atan(log_const/factor)
             angle_deg=angle/math.pi*180
         else:
@@ -172,20 +173,14 @@ def drawTextRadial(r,angle, text,scale,colour):
 # 3D Drawing Functions  
 # =============================================================================
 
-def draw_radial(radius1,radius2, height, num_slices,width,offset,colour,ang_width):
-    r1 = radius1
-    r2 = radius2
-    h = height
+def draw_radial(r1,r2, h, num_slices,width,offset,colour,ang_width):
     n = float(num_slices)
-    c = colour
-    rw = width
-    of = offset
 
     z = -h/2.0
     angle = offset/180*math.pi
     width1=ang_width/180*math.pi
     for i in range(int(n)):
-        angle = 2 * math.pi * (i/n)/rw + offset/180*math.pi
+        angle = 2 * math.pi * (i/n)/width + offset/180*math.pi
         x1 = r1 * math.cos(angle + width1)
         y1 = r1 * math.sin(angle + width1)
         x2 = r1 * math.cos(angle)
@@ -196,7 +191,7 @@ def draw_radial(radius1,radius2, height, num_slices,width,offset,colour,ang_widt
         y4 = r2 * math.sin(angle + width1)
 
         glBegin(GL_QUADS)#draw a quadrangle for the radial arm
-        glColor(c)
+        glColor(colour)
         glVertex(x1, y1, z)
         glVertex(x2, y2, z)
         glVertex(x3, y3, z)
@@ -204,17 +199,11 @@ def draw_radial(radius1,radius2, height, num_slices,width,offset,colour,ang_widt
         glVertex(x1, y1, z)
         glEnd()
 
-def draw_circle(radius1,radius2, height, num_slices,width,offset,colour):
-    r1 = radius1
-    r2=radius2
-    h = height
+def draw_circle(r1,r2, h, num_slices,width,offset,colour):
     n = float(num_slices)
-    c = colour
-    rw = width
-    of = offset
 
     glBegin(GL_TRIANGLE_FAN)#draw the circle
-    glColor(c)
+    glColor(colour)
     z = -h/2.0
     for i in range(int(n) + 1):
         angle = 2 * math.pi * (i/n)
@@ -253,7 +242,7 @@ def update_display():
     #Needs a more meaningful display
     drawText(20,40,str(factor) )
 
-    if(log_mode==0):
+    if(log_mode==False):
        intensity=500
        #Draw geometric shapes for the ATAN scales to investigate angular alignments.
        draw_circle(1,8,0.1,3,360,5,[106/intensity,27/intensity,154/intensity])#TRIANGLE
@@ -336,6 +325,7 @@ def print_help():
    print()
    print(" r,t,y,u,i - experimental arc tangent scaling factors")
    print(" h,j,k,l - experimental natural log scaling factors")
+   print(" v,b - demo modes")
 
 
    print(" ")
@@ -390,47 +380,49 @@ while True:
     elif keypress[pygame.K_e]:
        zoom_location=-1000
     elif keypress[pygame.K_s]:
+       demo_mode=False
        factor=19*math.sqrt(2)
-       log_mode=0
+       log_mode=False
        adjust_factors()
     elif keypress[pygame.K_r]:
        factor=9.5*math.sqrt(2)
-       log_mode=0
+       log_mode=False
        adjust_factors()
     elif keypress[pygame.K_t]:
        factor=19*math.sqrt(2)
-       log_mode=0
+       log_mode=False
        adjust_factors()
     elif keypress[pygame.K_y]:
        factor=57.206
-       log_mode=0
+       log_mode=False
        adjust_factors()
     elif keypress[pygame.K_u]:
        factor=(30)*math.sqrt(5)
-       log_mode=0
+       log_mode=False
        adjust_factors()
     elif keypress[pygame.K_i]:
        factor=82.37
-       log_mode=0
+       log_mode=False
        adjust_factors()
     elif keypress[pygame.K_a]:
-       log_mode=1
+       log_mode=True
+       demo_mode=False
        factor=1.0
        adjust_factors()
     elif keypress[pygame.K_h]:
-       log_mode=1
+       log_mode=True
        factor=0.75
        adjust_factors()
     elif keypress[pygame.K_j]:
-       log_mode=1
+       log_mode=True
        factor=1/math.sqrt(2)
        adjust_factors()
     elif keypress[pygame.K_k]:
-       log_mode=1
+       log_mode=True
        factor=1/math_phi
        adjust_factors()
     elif keypress[pygame.K_l]:
-       log_mode=1
+       log_mode=True
        factor=0.5
        adjust_factors()
     elif keypress[pygame.K_k]:
@@ -471,6 +463,12 @@ while True:
        disp_symbol=1
     elif keypress[pygame.K_g]:
        disp_symbol=3
+    elif keypress[pygame.K_v]:
+       demo_mode=True
+       rotate=1
+    elif keypress[pygame.K_b]:
+       demo_mode=False
+       rotate=0
     else:
        #Only rotate if no keys pressed
        rotation += rotate

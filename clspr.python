@@ -23,6 +23,7 @@
 # OpenGL intro: https://stackabuse.com/brief-introduction-to-opengl-in-python-with-pyopengl/
 # CSV reader: https://docs.python.org/3/library/csv.html
 # Circle examples: https://stackoverflow.com/questions/25423268/i-have-created-a-circle-from-lines-in-opengl-but-it-shows-holes-at-outer-edges
+# Mouse with OpenGL: https://stackoverflow.com/questions/46801701/how-to-find-pygame-window-coordinates-of-an-opengl-vertice
 
 # =============================================================================
 # Imports
@@ -40,17 +41,26 @@ import csv
 # =============================================================================
 # Global variables
 # =============================================================================
+debug=False
+
 demo_mode=False
 log_mode=False
 factor=19*math.sqrt(2)
 constants=[]
-zoom_distance=-20
 
 math_e=math.exp(1)
 math_phi=(1+math.sqrt(5))/2
 pi=math.pi
 
 zooming=True
+zoom_distance=-50
+
+mpos = [0,0]
+viewPos = [0,0]
+mouse_radial = [0,0]
+
+zoom_pos=[0,0,-100]
+zoom_set=[0,0,-50]
 
 # =============================================================================
 # CSV Reader Function                                 
@@ -186,6 +196,7 @@ def draw_radial(r1,r2, h, num_slices,width,offset,colour,ang_width):
     z = -h/2.0
     angle = offset/180*math.pi
     width1=ang_width/180*math.pi
+    #angle-=width1/2 #centre the angle  y offsetting the rectangle
     for i in range(int(n)):
         angle = 2 * math.pi * (i/n)/width + offset/180*math.pi
         x1 = r1 * math.cos(angle + width1)
@@ -223,17 +234,32 @@ def draw_circle(r1,r2, h, num_slices,width,offset,colour):
 
 
 # =============================================================================
+# Mouse Control
+# =============================================================================
+
+def check_mouse():
+    global mpos, viewPos , mouse_radial
+    newpos = pygame.mouse.get_pos()
+    if (newpos[0]!=mpos[0] or newpos[1]!=mpos[1]):
+       mpos=newpos
+       z = 31
+       ndc = [ 2.0 * mpos[0]/width - 1.0, 1.0 - 2.0 * mpos[1]/height ]
+       tanFov = math.tan( zoom_distance * 0.5 * math.pi / 180 )
+       aspect = width / height
+       viewPos = [z * ndc[0] * aspect * tanFov + zoom_set[0] , z * ndc[1] * tanFov +zoom_set[1]]
+       mouse_ang=180*math.atan2(viewPos[0],-viewPos[1])/math.pi+90
+       if (mouse_ang>180):
+           mouse_ang=mouse_ang-360
+       mouse_radial = [ math.sqrt(viewPos[0]*viewPos[0]+viewPos[1]*viewPos[1]) , mouse_ang ]
+       return True
+    return False
+
+# =============================================================================
 # Update screen
 # =============================================================================
 
-zoom_pos=[0,0,-100]
-zoom_set=[0,0,-50]
-
 def update_zoom():
-   global zoom_set
-   global zoom_pos
-   global zooming
-   global zooming
+   global zoom_set , zoom_pos, zooming, mouse_radial
    if (zoom_location==-1000):
         #move back far enough to see this object
         zoom_set=[0,0,-50]
@@ -256,8 +282,13 @@ def update_zoom():
 
    glTranslate(zoom_pos[0], zoom_pos[1], zoom_pos[2])
 
+def angle_difference(a,b):
+   while b<-180:
+      b+=360
+   return min(360 - abs(a - b), abs(a - b))
 
 def update_display():
+    global mpos, mouse_radial, viewPos
     glClear(GL_COLOR_BUFFER_BIT)
     glClear(GL_DEPTH_BUFFER_BIT)
     glEnable(GL_DEPTH_TEST)
@@ -273,6 +304,15 @@ def update_display():
     #Needs a more meaningful display
     drawText(20,40,str(factor) )
     drawText(20,20,str(zoom_distance) )
+
+
+    if (debug):
+        drawText(20,70,str(round(mouse_radial[0],3)) )
+        drawText(20,90,str(round(mouse_radial[1],2)) )
+        drawText(20,110,str(mpos[0]) )
+        drawText(20,130,str(mpos[1]) )
+        #drawText(20,140,str(viewPos[0]) )
+        #drawText(20,160,str(viewPos[1]) )
 
     if(log_mode==False):
        intensity=500
@@ -297,20 +337,30 @@ def update_display():
     wd=800
     overlap=0.05
 
+    mouse_ang_width=0.6
 
-    #Marker for 23 degrees which is maximum angle for polarisation entanglement
-    draw_radial(13,15,hght,30,wd,23+120,[1,1,0],0.5)
-    draw_radial(13,15,hght,30,wd,120,[1,1,0],0.5)
-
-    #Marker for 23 degrees which is maximum angle for polarisation entanglement
-    draw_radial(13,15,hght,30,wd,90,[1,1,0],0.5)
-    draw_radial(13,15,hght,30,wd,90+23,[1,1,0],0.5)
+    if (not log_mode):
+        #Marker for 23 degrees which is maximum angle for polarisation entanglement
+        draw_radial(13,15,hght,30,wd,23+120,[1,1,0],0.5)
+        draw_radial(13,15,hght,30,wd,120,[1,1,0],0.5)
+        #Marker for 23 degrees which is maximum angle for polarisation entanglement
+        draw_radial(13,15,hght,30,wd,90,[1,1,0],0.5)
+        draw_radial(13,15,hght,30,wd,90+23,[1,1,0],0.5)
 
     for (const_name,log_const,angle_deg,const_colour,geometry,symbol) in constants:
        if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0)):
            draw_radial(8,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,0.5)
            draw_radial(10-overlap,12,hght,slice,wd,angle_deg,const_colour,0.5)
            draw_radial(9,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,0.5)
+           #Detect mouse over constant
+           if(mouse_radial[0]>=5 and mouse_radial[0]<10):
+              if(angle_difference(mouse_radial[1],(angle_deg-rotation/5))<mouse_ang_width):
+                 drawText(20,200,const_name+"                   ")
+                 drawText(20,220,symbol+"              ")  
+           if(mouse_radial[0]>=10 and mouse_radial[0]<14):
+              if(angle_difference(mouse_radial[1],angle_deg)<mouse_ang_width):
+                 drawText(20,200,const_name+"                   ") 
+                 drawText(20,220,symbol+"              ") 
 
        if(geometry>0 and geometry<6):
           drawTextRadialRaster(12.5,angle_deg, const_name)
@@ -320,12 +370,12 @@ def update_display():
 
        if (zoom_location>-1000 or disp_symbol==3):
           text_offset=0.3
-          if (disp_symbol==0):
-              drawTextRadial(12+text_offset,angle_deg, const_name,0.0015,yellow)
-              drawTextRadial(10+text_offset,angle_deg-rotation/5, const_name,0.0015,yellow)
-          else:
+          if (disp_symbol!=0):
               drawTextRadial(12+text_offset,angle_deg, symbol,0.0015,yellow)
               drawTextRadial(10+text_offset,angle_deg-rotation/5,symbol,0.0015,yellow)
+          #else:
+              #drawTextRadial(12+text_offset,angle_deg, const_name,0.0015,yellow)
+              #drawTextRadial(10+text_offset,angle_deg-rotation/5, const_name,0.0015,yellow)
 
       
        if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0)):
@@ -393,6 +443,8 @@ while True:
     keypress = pygame.key.get_pressed()
     req_update=True
 
+    prev_zoom_location=zoom_location
+
     #TODO: This becomes a case statement in Python3.10
     if keypress[pygame.K_z]:
        rotation += 1.0
@@ -403,12 +455,15 @@ while True:
     elif keypress[pygame.K_q]:
        rotation = 0.0
        rotate=0
+       zoom_distance=-50
        zoom_location=-1000
     elif keypress[pygame.K_w]:
        rotation = 180.0*5
        rotate=0
+       zoom_distance=-50
        zoom_location=-1000
     elif keypress[pygame.K_e]:
+       zoom_distance=-50
        zoom_location=-1000
     elif keypress[pygame.K_s]:
        demo_mode=False
@@ -521,6 +576,13 @@ while True:
          req_update=True
        else:
          req_update=False
+
+    #Focus after a zoom change
+    if (zoom_location!=prev_zoom_location):
+        zoom_distance=-20
+
+    if (check_mouse()):
+       req_update=True
 
     if (req_update or zooming):
        update_display()

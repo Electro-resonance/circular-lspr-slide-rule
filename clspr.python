@@ -36,10 +36,15 @@ import math
 import sys
 import csv
 
+
+# =============================================================================
+# Global variables
+# =============================================================================
 demo_mode=False
 log_mode=False
 factor=19*math.sqrt(2)
 constants=[]
+zoom_distance=-20
 
 math_e=math.exp(1)
 math_phi=(1+math.sqrt(5))/2
@@ -232,11 +237,11 @@ def update_display():
     if (zoom_location==-1000):
         glTranslate(0, 0, -50)#move back far enough to see this object
     else:
-        zoom_radius=12
+        zoom_radius=10
         zoom_angle=zoom_location
         x_zoom = zoom_radius * math.cos(zoom_angle/180*math.pi)
         y_zoom = zoom_radius * math.sin(zoom_angle/180*math.pi)
-        glTranslate(x_zoom, y_zoom, -20)
+        glTranslate(x_zoom, y_zoom, zoom_distance)
 
     #TODO: This is the factor used for ATAN mode.
     #Needs a more meaningful display
@@ -313,13 +318,15 @@ def print_help():
    print("** Circular logarithmic slide rule for fundamental physical constants **")
    print()
    print(" z,x = rotate the inner slide rule wheel")
+   print(" c,d = zoom in/out")
    print(" q = return to 0 degree rotation point")
    print(" w = return to -180 degree rotation point")
    print(" e = cancel zoom")
    print(" 1,2,3,4,5,6,7,8,9,0 = zoom on sectors of the circular slide rule")
-   print(" d = display basic symbols")
-   print(" f = display all symbols")
-   print(" g = display basic symbols when not zoomed")
+
+   print(" f = display basic symbols")
+   print(" g = display all symbols")
+   print(" h = display basic symbols when not zoomed")
    print(" a = natural log mode")
    print(" s = arctangent natural log mode")
    print()
@@ -457,11 +464,11 @@ while True:
        zoom_location=-144
     elif keypress[pygame.K_0]:
        zoom_location=180
-    elif keypress[pygame.K_d]:
-       disp_symbol=0
     elif keypress[pygame.K_f]:
-       disp_symbol=1
+       disp_symbol=0
     elif keypress[pygame.K_g]:
+       disp_symbol=1
+    elif keypress[pygame.K_h]:
        disp_symbol=3
     elif keypress[pygame.K_v]:
        demo_mode=True
@@ -469,6 +476,20 @@ while True:
     elif keypress[pygame.K_b]:
        demo_mode=False
        rotate=0
+    elif keypress[pygame.K_c]:
+       if (zoom_location!=-1000):
+          zoom_distance=zoom_distance+1
+          if(zoom_distance>10):
+             zoom_distance=-1000
+       else:
+          zoom_location=180
+    elif keypress[pygame.K_d]:
+       if (zoom_location!=-1000):
+          zoom_distance=zoom_distance-1
+          if(zoom_distance>10):
+             zoom_distance=-100
+       else:
+          zoom_location=180
     else:
        #Only rotate if no keys pressed
        rotation += rotate

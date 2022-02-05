@@ -479,7 +479,8 @@ def update_display():
 def request_help():
    global help_state, help_scaling 
    help_state=0
-   help_scaling=100
+   if (help_state!=0):
+       help_scaling=100
 
 def help_display():
    global help_state, help_scaling

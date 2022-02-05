@@ -46,6 +46,8 @@ position_debug=False
 demo_mode=False
 log_mode=False
 factor=19*math.sqrt(2)
+ln_constants=[]
+fundamental_constants=[]
 constants=[]
 
 math_e=math.exp(1)
@@ -84,7 +86,7 @@ help_scaling=0
 # ============================================================================= 
 
 def read_csv():
-  global constants
+  global fundamental_constants
   constants=[]
   with open('constants.csv', 'r', newline='',encoding='utf16') as csvfile:
      reader = csv.DictReader(csvfile)
@@ -142,7 +144,43 @@ def read_csv():
 
         #Create a list of constants
         const=(const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory)
-        constants.append(const)
+        fundamental_constants.append(const)
+
+        read_log_constants()
+
+# =============================================================================
+# Natural Logarithm Scale
+# =============================================================================
+
+def read_log_constants():
+    global ln_constants
+    ln_constants=[]
+    for exp in range(-7,7):
+        for dec in range(1,10):
+            if (dec!=0 or exp==0):
+                fvalue=dec*10**exp
+                name=str(dec)+"E"+str(exp)
+                #print(name+"="+str(fvalue))
+                if(fvalue==0):
+                    log_const=1
+                elif (fvalue>0):
+                    log_const=math.log(fvalue)
+                else:
+                    log_const=-1* math.log(-fvalue)
+                angle_deg=log_const/factor
+                const_colour=[1,1,1]
+                geometry=0
+                fs="{:."+str(abs(exp))+"f}"
+                value=fs.format(dec)
+                symbol=fs.format(fvalue)
+                source="natural log"
+                uncertainty=0
+                units=" "
+                category=" "
+                subcategory=" "
+                const=(name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory)
+                ln_constants.append(const)
+       
 
 # =============================================================================
 # Misc Functions
@@ -508,14 +546,16 @@ def help_display():
    drawText(help_x,help_y-10*vert_space," f = display basic symbols",fs)
    drawText(help_x,help_y-11*vert_space," g = display all symbols",fs)
    drawText(help_x,help_y-12*vert_space," + = display basic symbols when not zoomed",fs)
-   drawText(help_x,help_y-13*vert_space," a = natural log mode (LSPR mode)",fs)
+   drawText(help_x,help_y-13*vert_space," a = natural log (LSPR mode)",fs)
    drawText(help_x,help_y-14*vert_space," s = arctangent natural log mode",fs)
+   drawText(help_x,help_y-15*vert_space," j = natural log (conventional slide rule) mode",fs)
 
-   drawText(help_x,help_y-16*vert_space," r,t,y,u,i - experimental ARCTAN/LN scaling factors",fs)
-   drawText(help_x,help_y-17*vert_space," v,b - demo modes",fs)
 
-   drawText(help_x,help_y-19*vert_space," k,l = course adjust factor for ARCTAN scaling",fs)
-   drawText(help_x,help_y-20*vert_space," n,m = fine adjust factor for ARCTAN scaling",fs)
+   drawText(help_x,help_y-16.5*vert_space," r,t,y,u,i - experimental arctan/ln scaling factors",fs)
+   drawText(help_x,help_y-17.5*vert_space," v,b - demo modes",fs)
+
+   drawText(help_x,help_y-19*vert_space," k,l = course adjust factor for arctan scaling",fs)
+   drawText(help_x,help_y-20*vert_space," n,m = fine adjust factor for arctan scaling",fs)
    drawText(help_x,help_y-21*vert_space," h=help",fs)
    drawText(help_x,help_y-23*vert_space,"                         --------> Press Any Key To Continue... <--------",fs)
 
@@ -525,6 +565,7 @@ def help_display():
 # =============================================================================
 
 read_csv() # Read the fundamental constants into a list
+constants=fundamental_constants
 
 pygame.init()
 request_help()
@@ -585,6 +626,7 @@ while True:
        zoom_distance=default_zoom
        zoom_location=-1000
     elif keypress[pygame.K_s]:
+       constants=fundamental_constants
        demo_mode=False
        factor=19*math.sqrt(2)
        log_mode=False
@@ -620,9 +662,16 @@ while True:
           factor=82.37
        adjust_factors()
     elif keypress[pygame.K_a]:
+       constants=fundamental_constants
        log_mode=True
        demo_mode=False
        factor=1.0
+       adjust_factors()
+    elif keypress[pygame.K_j]:
+       constants=ln_constants
+       log_mode=True
+       demo_mode=False
+       factor=0.1
        adjust_factors()
     elif keypress[pygame.K_k]:
        factor+=0.1

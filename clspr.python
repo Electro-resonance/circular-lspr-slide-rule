@@ -52,9 +52,13 @@ math_e=math.exp(1)
 math_phi=(1+math.sqrt(5))/2
 pi=math.pi
 
-default_zoom=-60
+draw_help=False
+after_help_zoom=-55
+help_zoom=-30
+default_zoom=help_zoom
 
 zooming=True
+zooming_complete=False
 zoom_distance=default_zoom
 
 mpos = [0,0]
@@ -71,6 +75,8 @@ rotation = 0.0
 
 yellow=[1,1,0]
 white=[1,1,1]
+
+help_state=0
 
 # =============================================================================
 # CSV Reader Function                                 
@@ -284,7 +290,11 @@ def check_mouse():
     newpos = pygame.mouse.get_pos()
     if (newpos[0]!=mpos[0] or newpos[1]!=mpos[1]):
        mpos=newpos
-       z = 31
+       #Scaling factor for mouse focus at a distance
+       if(zoom_pos[0]==0 and zoom_pos[1]==0):
+           z = 28 
+       else:
+           z = 31
        ndc = [ 2.0 * mpos[0]/width - 1.0, 1.0 - 2.0 * mpos[1]/height ]
        tanFov = math.tan( zoom_distance * 0.5 * math.pi / 180 )
        aspect = width / height
@@ -320,7 +330,7 @@ def check_mouse():
 # =============================================================================
 
 def update_zoom():
-   global zoom_set , zoom_pos, zooming, mouse_radial
+   global zoom_set , zoom_pos, zooming, mouse_radial, zooming_complete
    if (zoom_location==-1000):
         #move back far enough to see this object
         zoom_set=[0,0,default_zoom]
@@ -340,13 +350,16 @@ def update_zoom():
    #Check if we are nearly at destination zoom position
    if dist<0.01:
        zoom_pos=zoom_set
+       zooming_complete=True
+   else:
+       zomming_complete=False
 
    glTranslate(zoom_pos[0], zoom_pos[1], zoom_pos[2])
 
 
 
 def update_display():
-    global mpos, mouse_radial, viewPos
+    global mpos, mouse_radial, viewPos, zooming_complete
     glClear(GL_COLOR_BUFFER_BIT)
     glClear(GL_DEPTH_BUFFER_BIT)
     glEnable(GL_DEPTH_TEST)
@@ -451,7 +464,10 @@ def update_display():
 
        if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0) or rad_len==13.5):
           #Draw outer circle spokes
-          draw_radial(11-overlap,rad_len,hght,slice,wd,angle_deg,const_colour,0.5)
+          draw_radial(10-overlap,rad_len,hght,slice,wd,angle_deg,const_colour,0.5)
+
+    if(zooming_complete):
+          help_display()
 
     pygame.display.flip()
 
@@ -459,37 +475,45 @@ def update_display():
 # Help Banner
 # =============================================================================
 
-def print_help():
-   print("** Circular logarithmic slide rule for fundamental physical constants **")
-   print()
-   print(" z,x = rotate the inner slide rule wheel")
-   print(" c,d = zoom in/out")
-   print(" q = return to 0 degree rotation point")
-   print(" w = return to -180 degree rotation point")
-   print(" e = cancel zoom")
-   print(" 1,2,3,4,5,6,7,8,9,0 = zoom on sectors of the circular slide rule")
+def help_display():
+   global help_state
+   if (help_state>1):
+      return True
+   if (help_state==0):
+      help_state+=1
 
-   print(" f = display basic symbols")
-   print(" g = display all symbols")
-   print(" h = display basic symbols when not zoomed")
-   print(" a = natural log mode")
-   print(" s = arctangent natural log mode")
-   print()
-   print(" r,t,y,u,i - experimental arc tangent scaling factors")
-   print(" h,j,k,l - experimental natural log scaling factors")
-   print(" v,b - demo modes")
+   help_x=230
+   help_y=590
+   fs=18
+   vert_space=20
+   drawText(help_x,help_y-0*vert_space,"Circular logarithmic slide rule for fundamental physical constants",fs+2)
+   drawText(help_x,help_y-3*vert_space," z,x = rotate the inner slide rule wheel",fs)
+   drawText(help_x,help_y-4*vert_space," c,d = zoom in/out",fs)
+   drawText(help_x,help_y-5*vert_space," q = return to 0 degree rotation point",fs)
+   drawText(help_x,help_y-6*vert_space," w = return to -180 degree rotation point",fs)
+   drawText(help_x,help_y-7*vert_space," e = cancel zoom",fs)
+   drawText(help_x,help_y-8*vert_space," 1,2,3,4,5,6,7,8,9,0 = zoom on sectors of the circular slide rule",fs)
 
+   drawText(help_x,help_y-10*vert_space," f = display basic symbols",fs)
+   drawText(help_x,help_y-11*vert_space," g = display all symbols",fs)
+   drawText(help_x,help_y-12*vert_space," + = display basic symbols when not zoomed",fs)
+   drawText(help_x,help_y-13*vert_space," a = natural log mode (LSPR mode)",fs)
+   drawText(help_x,help_y-14*vert_space," s = arctangent natural log mode",fs)
 
-   print(" ")
-   print(" k,l = course adjust factor for ARCTAN scaling")
-   print(" n,m = fine adjust factor for ARCTAN scaling")
+   drawText(help_x,help_y-16*vert_space," r,t,y,u,i - experimental ARCTAN/LN scaling factors",fs)
+   drawText(help_x,help_y-17*vert_space," v,b - demo modes",fs)
+
+   drawText(help_x,help_y-19*vert_space," k,l = course adjust factor for ARCTAN scaling",fs)
+   drawText(help_x,help_y-20*vert_space," n,m = fine adjust factor for ARCTAN scaling",fs)
+   drawText(help_x,help_y-21*vert_space," h=help",fs)
+   drawText(help_x,help_y-23*vert_space,"                         --------> Press Any Key To Continue... <--------",fs)
+
 
 # =============================================================================
 # Main Code
 # =============================================================================
 
 read_csv() # Read the fundamental constants into a list
-print_help()
 
 pygame.init()
 (width, height) = (1080,800) #(800, 600)
@@ -513,6 +537,18 @@ while True:
     req_update=True
 
     prev_zoom_location=zoom_location
+
+    if(help_state==1):
+        #Check all keys to continue after help screen
+        pressed=False
+        for keys in keypress:
+            if(keys==True):
+                pressed=True
+        if (pressed==True):
+            help_state+=1
+            default_zoom=after_help_zoom
+            zoom_distance=default_zoom
+            zoom_location=-1000
 
     #TODO: This becomes a case statement in Python3.10
     if keypress[pygame.K_z]:
@@ -540,45 +576,39 @@ while True:
        log_mode=False
        adjust_factors()
     elif keypress[pygame.K_r]:
-       factor=9.5*math.sqrt(2)
-       log_mode=False
+       if (log_mode):
+          factor=1.0
+       else:
+          factor=9.5*math.sqrt(2)
        adjust_factors()
     elif keypress[pygame.K_t]:
-       factor=19*math.sqrt(2)
-       log_mode=False
+       if (log_mode):
+           factor=0.75    
+       else:
+           factor=19*math.sqrt(2)
        adjust_factors()
     elif keypress[pygame.K_y]:
-       factor=57.206
-       log_mode=False
+       if (log_mode):
+           factor=1/math.sqrt(2)
+       else:
+           factor=57.206
        adjust_factors()
     elif keypress[pygame.K_u]:
-       factor=(30)*math.sqrt(5)
-       log_mode=False
+       if (log_mode):
+           factor=1/math_phi
+       else:
+           factor=(30)*math.sqrt(5)
        adjust_factors()
     elif keypress[pygame.K_i]:
-       factor=82.37
-       log_mode=False
+       if (log_mode):
+           factor=0.5
+       else:
+          factor=82.37
        adjust_factors()
     elif keypress[pygame.K_a]:
        log_mode=True
        demo_mode=False
        factor=1.0
-       adjust_factors()
-    elif keypress[pygame.K_h]:
-       log_mode=True
-       factor=0.75
-       adjust_factors()
-    elif keypress[pygame.K_j]:
-       log_mode=True
-       factor=1/math.sqrt(2)
-       adjust_factors()
-    elif keypress[pygame.K_k]:
-       log_mode=True
-       factor=1/math_phi
-       adjust_factors()
-    elif keypress[pygame.K_l]:
-       log_mode=True
-       factor=0.5
        adjust_factors()
     elif keypress[pygame.K_k]:
        factor+=0.1
@@ -612,11 +642,11 @@ while True:
        zoom_location=-144
     elif keypress[pygame.K_0]:
        zoom_location=180
-    elif keypress[pygame.K_f]:
-       disp_symbol=0
     elif keypress[pygame.K_g]:
+       disp_symbol=0
+    elif keypress[pygame.K_f]:
        disp_symbol=1
-    elif keypress[pygame.K_h]:
+    elif keypress[pygame.K_PLUS]:
        disp_symbol=3
     elif keypress[pygame.K_v]:
        demo_mode=True
@@ -638,6 +668,11 @@ while True:
              zoom_distance=-99
        else:
           zoom_location=180
+    elif keypress[pygame.K_h]:
+       help_state=0
+       zoom_distance=help_zoom
+       default_zoom=help_zoom
+       zoom_location=-1000
     else:
        #Only rotate if no keys pressed
        rotation += rotate

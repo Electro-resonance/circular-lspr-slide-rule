@@ -41,7 +41,7 @@ import csv
 # =============================================================================
 # Global variables
 # =============================================================================
-debug=False
+position_debug=False
 
 demo_mode=False
 log_mode=False
@@ -52,8 +52,10 @@ math_e=math.exp(1)
 math_phi=(1+math.sqrt(5))/2
 pi=math.pi
 
+default_zoom=-60
+
 zooming=True
-zoom_distance=-50
+zoom_distance=default_zoom
 
 mpos = [0,0]
 viewPos = [0,0]
@@ -63,9 +65,12 @@ mouse_button = [0,0,0]
 prev_mouse_button =[0,0,0]
 
 zoom_pos=[0,0,-100]
-zoom_set=[0,0,-50]
+zoom_set=[0,0,default_zoom]
 
 rotation = 0.0
+
+yellow=[1,1,0]
+white=[1,1,1]
 
 # =============================================================================
 # CSV Reader Function                                 
@@ -170,21 +175,26 @@ def adjust_factors():
 # 3D Text Printing Functions   
 # =============================================================================
 
-def drawText(x, y, text,pts):
-    font = pygame.font.SysFont('arial', pts)                                                
+
+
+def drawText(x, y, text, pts):
+    font = pygame.font.SysFont('arial', pts)
     textSurface = font.render(text, True, (255, 255, 66, 255)).convert_alpha()
     textData = pygame.image.tostring(textSurface, "RGBA", True)
     glWindowPos2d(x, y)
     glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
-       
-
-def drawTextRadialRaster(r,angle, text):
+ 
+def drawTextRadialHoriz(r,angle, text):
     x = r * math.cos(angle/180*math.pi)
     y = r * math.sin(angle/180*math.pi)
     textSurface = font.render(text, True, (255, 255, 66, 255)).convert_alpha()
     textData = pygame.image.tostring(textSurface, "RGBA", True)
     glRasterPos(x,y)
     glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
+
+def drawTextRadialPts(x, y, text, pts):
+    font = pygame.font.SysFont('arial', pts)
+    drawTextRadialHoriz(r,angle, text)
 
 def label(x, y, s, angle, dir, scale,colour):
      glPushMatrix()
@@ -313,7 +323,7 @@ def update_zoom():
    global zoom_set , zoom_pos, zooming, mouse_radial
    if (zoom_location==-1000):
         #move back far enough to see this object
-        zoom_set=[0,0,-50]
+        zoom_set=[0,0,default_zoom]
    else:
         zoom_radius=10
         zoom_angle=zoom_location
@@ -332,6 +342,8 @@ def update_zoom():
        zoom_pos=zoom_set
 
    glTranslate(zoom_pos[0], zoom_pos[1], zoom_pos[2])
+
+
 
 def update_display():
     global mpos, mouse_radial, viewPos
@@ -352,13 +364,13 @@ def update_display():
     drawText(20,20,str(zoom_distance) ,14)
 
 
-    if (debug):
-        drawText(20,70,str(round(mouse_radial[0],3)) )
-        drawText(20,90,str(round(mouse_radial[1],2)) )
-        drawText(20,110,str(mpos[0]) )
-        drawText(20,130,str(mpos[1]) )
-        #drawText(20,140,str(viewPos[0]) )
-        #drawText(20,160,str(viewPos[1]) )
+    if (position_debug):
+        drawText(920,70,str(round(mouse_radial[0],3)),14 )
+        drawText(920,90,str(round(mouse_radial[1],2)),14 )
+        drawText(920,110,str(mpos[0]),14 )
+        drawText(920,130,str(mpos[1]),14 )
+        drawText(920,150,str(viewPos[0]),14 )
+        drawText(920,170,str(viewPos[1]),14 )
 
     if(log_mode==False):
        intensity=500
@@ -387,11 +399,11 @@ def update_display():
 
     if (not log_mode):
         #Marker for 23 degrees which is maximum angle for polarisation entanglement
-        draw_radial(13,15,hght,30,wd,23+120,[1,1,0],0.5)
-        draw_radial(13,15,hght,30,wd,120,[1,1,0],0.5)
+        draw_radial(12,13,hght,30,wd,23+120,[1,1,0],0.5)
+        draw_radial(12,13,hght,30,wd,120,[1,1,0],0.5)
         #Marker for 23 degrees which is maximum angle for polarisation entanglement
-        draw_radial(13,15,hght,30,wd,90,[1,1,0],0.5)
-        draw_radial(13,15,hght,30,wd,90+23,[1,1,0],0.5)
+        draw_radial(12,13,hght,30,wd,90,[1,1,0],0.5)
+        draw_radial(12,13,hght,30,wd,90+23,[1,1,0],0.5)
 
     detail_offset=150
 
@@ -400,6 +412,7 @@ def update_display():
            draw_radial(8,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,0.5)
            draw_radial(10-overlap,12,hght,slice,wd,angle_deg,const_colour,0.5)
            draw_radial(9,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,0.5)
+
            #Detect mouse over constant
            draw_text=False
            if(mouse_radial[0]>=5 and mouse_radial[0]<10):
@@ -411,30 +424,33 @@ def update_display():
            
            if (draw_text==True):
               drawText(20,detail_offset,value+ " " + units,20)
-              if (symbol in const_name):
-                  symbol=""
-              drawText(20,detail_offset+30,const_name+ "    " +symbol,20) 
+              if (symbol in const_name): 
+                  symbol_disp="" 
+              else: 
+                  symbol_disp=symbol
+              drawText(20,detail_offset+30,const_name+ "    " +symbol_disp,20) 
               drawText(20,detail_offset+60,"Source: " +source,12)
               detail_offset+=100
 
+
+       #The horizontal text displayed at the geometrical points of the outer wheel
        if(geometry>0 and geometry<6):
-          drawTextRadialRaster(12.5,angle_deg, const_name)
-          rad_len=13
+          drawTextRadialHoriz(14,angle_deg, const_name) #Fast 
+          # drawTextRadialPts(12.5,angle_deg, symbol,18) #Slow, shows utf-16
+          # drawText(13.7,angle_deg, const_name) #Fast, but does not show utf-16
+          rad_len=13.5
        else:
           rad_len=12
 
+       #Text to display on start-up zoom setting
        if (zoom_location>-1000 or disp_symbol==3):
           text_offset=0.3
           if (disp_symbol!=0):
               drawTextRadial(12+text_offset,angle_deg, symbol,0.0015,yellow)
               drawTextRadial(10+text_offset,angle_deg-rotation/5,symbol,0.0015,yellow)
-          #else:
-              #drawTextRadial(12+text_offset,angle_deg, const_name,0.0015,yellow)
-              #drawTextRadial(10+text_offset,angle_deg-rotation/5, const_name,0.0015,yellow)
 
-      
-       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0)):
-          #Draw outer circle
+       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0) or rad_len==13.5):
+          #Draw outer circle spokes
           draw_radial(11-overlap,rad_len,hght,slice,wd,angle_deg,const_colour,0.5)
 
     pygame.display.flip()
@@ -486,7 +502,6 @@ glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 rotate=1
 zoom_location=-1000
 disp_symbol=1
-yellow=[1,1,0]
 
 while True:
     for event in pygame.event.get():
@@ -509,15 +524,15 @@ while True:
     elif keypress[pygame.K_q]:
        rotation = 0.0
        rotate=0
-       zoom_distance=-50
+       zoom_distance=default_zoom
        zoom_location=-1000
     elif keypress[pygame.K_w]:
        rotation = 180.0*5
        rotate=0
-       zoom_distance=-50
+       zoom_distance=default_zoom
        zoom_location=-1000
     elif keypress[pygame.K_e]:
-       zoom_distance=-50
+       zoom_distance=default_zoom
        zoom_location=-1000
     elif keypress[pygame.K_s]:
        demo_mode=False

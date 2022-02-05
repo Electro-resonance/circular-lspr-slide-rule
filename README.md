@@ -2,7 +2,7 @@
 An open source tribute to the great physicist - Orest Bedrij, the book '1' and his life's work, specifically his research into the relationships of the fundamental constants 
 and the principles of Each One Teach One (EOTO).
 
-The circular slide rule allows exploration of logarithmic and geometric relationships between the physical fundamental constants. Orest discovered a method described in his '1' books to derive all of the constants from just five seed constants which are based on experimental physical measurements (from international agreed physical CODATA). The derived constants are then in some cases to a greater accuracy than is possible with experimental measurement. The work of Orest suggests a deeper connection in nature between the constants and hint at an underlying geometry of the universe. 
+The circular slide rule allows exploration of logarithmic and geometric relationships between the physical fundamental constants. Orest discovered a method described in his '1' books to derive all of the constants from just five seed constants which are based on experimental physics measurements (and are sourced from the international agreed CODATA set). The derived constants are then in some cases to a greater accuracy than is possible with experimental measurement. The work of Orest suggests a deeper connection in nature between the constants and hint at an underlying geometry of the universe. 
 
 The inspiration for this project was formed at an Each One Teach One EOTO retreat in 2018 whereby after the project founder (Martin Timms) gave a science talk to the retreat attendees revealing discoveries related to mapping the fundamental constants onto a unit circle and the significance and understanding that can be gained from doing so. Following the talk, Martin made a promise to continue the fundamental constants work and spread the message about Orest's scientific and fundamental physics research.
 
@@ -30,4 +30,6 @@ iv) CODATA - https://codata.org/initiatives/data-science-and-stewardship/fundame
 
 v) CODATA - https://pml.nist.gov/cuu/pdf/wall_2018.pdf
 
-vi) Orest John Bedrij book of memories and obituary: https://aloiafuneral.com/book-of-memories/4844558/Bedrij-Orest-John/index.php?fbclid=IwAR3wTsE10prc8IizVvw3fxy_nzbWvMEFj4METB6hW08ovJTPYw4IMIMRaZo
+vi) Github Cosmolog project as used for generating the physical equations lists in Orest's '1' book: https://github.com/knousere/Cosmolog
+
+v) Orest John Bedrij book of memories and obituary: https://aloiafuneral.com/book-of-memories/4844558/Bedrij-Orest-John/index.php?fbclid=IwAR3wTsE10prc8IizVvw3fxy_nzbWvMEFj4METB6hW08ovJTPYw4IMIMRaZo

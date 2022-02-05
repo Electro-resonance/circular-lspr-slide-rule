@@ -13,7 +13,7 @@ In the arctangent mode, the slide rule allows investigations of the alignment of
 In logarithmic mode, the slide rule allows investigations of the alignment of constants with natural scaling.
 
 
-The software prototype is minimal in preparaion for development. Initially control is via keypresses with key usage shown as text printed in the startup log (not yet as a text window.
+The software prototype is minimal in preparaion for development. Control is via keypresses, mouse hover and mouse drag of the inner slide rule wheel.
 
 Enjoy, learn, and teach others of the knowledge that you gain in the spirit of "Each One Teach One" EOTO.
 

@@ -77,6 +77,7 @@ yellow=[1,1,0]
 white=[1,1,1]
 
 help_state=0
+help_scaling=0
 
 # =============================================================================
 # CSV Reader Function                                 
@@ -475,16 +476,25 @@ def update_display():
 # Help Banner
 # =============================================================================
 
+def request_help():
+   global help_state, help_scaling 
+   help_state=0
+   help_scaling=100
+
 def help_display():
-   global help_state
+   global help_state, help_scaling
    if (help_state>1):
       return True
    if (help_state==0):
       help_state+=1
 
-   help_x=230
-   help_y=590
-   fs=18
+   help_scaling-=10
+   if (help_scaling)<0:
+      help_scaling=0
+
+   help_x=230+help_scaling
+   help_y=590-(help_scaling*3)
+   fs=int(18*(100-help_scaling)/100)
    vert_space=20
    drawText(help_x,help_y-0*vert_space,"Circular logarithmic slide rule for fundamental physical constants",fs+2)
    drawText(help_x,help_y-3*vert_space," z,x = rotate the inner slide rule wheel",fs)
@@ -516,6 +526,8 @@ def help_display():
 read_csv() # Read the fundamental constants into a list
 
 pygame.init()
+request_help()
+
 (width, height) = (1080,800) #(800, 600)
 screen = pygame.display.set_mode((width, height), OPENGL | DOUBLEBUF)
 clock = pygame.time.Clock()
@@ -670,7 +682,7 @@ while True:
        else:
           zoom_location=180
     elif keypress[pygame.K_h]:
-       help_state=0
+       request_help()
        zoom_distance=help_zoom
        default_zoom=help_zoom
        zoom_location=-1000

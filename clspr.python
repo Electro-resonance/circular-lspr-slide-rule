@@ -479,7 +479,7 @@ def update_display():
 def request_help():
    global help_state, help_scaling 
    help_state=0
-   if (help_state!=0):
+   if (help_state==0 or help_state==3):
        help_scaling=100
 
 def help_display():
@@ -496,7 +496,7 @@ def help_display():
    help_x=230+help_scaling
    help_y=590-(help_scaling*3)
    fs=int(18*(100-help_scaling)/100)
-   vert_space=20
+   vert_space=20*(100-help_scaling)/100
    drawText(help_x,help_y-0*vert_space,"Circular logarithmic slide rule for fundamental physical constants",fs+2)
    drawText(help_x,help_y-3*vert_space," z,x = rotate the inner slide rule wheel",fs)
    drawText(help_x,help_y-4*vert_space," c,d = zoom in/out",fs)

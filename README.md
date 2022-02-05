@@ -29,3 +29,5 @@ iii) Orest Bedrij "REVELATION AND VERIFICATION OF ULTIMATE REALITY AND MEANING T
 iv) CODATA - https://codata.org/initiatives/data-science-and-stewardship/fundamental-physical-constants/
 
 v) CODATA - https://pml.nist.gov/cuu/pdf/wall_2018.pdf
+
+vi) Orest John Bedrij book of memories and obituary: https://aloiafuneral.com/book-of-memories/4844558/Bedrij-Orest-John/index.php?fbclid=IwAR3wTsE10prc8IizVvw3fxy_nzbWvMEFj4METB6hW08ovJTPYw4IMIMRaZo

@@ -380,6 +380,8 @@ def update_display():
         draw_radial(13,15,hght,30,wd,90,[1,1,0],0.5)
         draw_radial(13,15,hght,30,wd,90+23,[1,1,0],0.5)
 
+    detail_offset=150
+
     for (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory) in constants:
        if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0)):
            draw_radial(8,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,0.5)
@@ -395,11 +397,10 @@ def update_display():
                  draw_text=True
            
            if (draw_text==True):
-              drawText(20,320,source+"                                               ",20)
-              drawText(20,290,const_name+"                                           ",20) 
-              drawText(20,260,symbol+"      ",20)
-              drawText(20,230,value+"       ",20) 
-              drawText(20,200,units+"       ",20) 
+              drawText(20,detail_offset,value+ " " + units,20)
+              drawText(20,detail_offset+30,const_name+" "+symbol,20) 
+              drawText(20,detail_offset+60,source,20)
+              detail_offset+=100
 
        if(geometry>0 and geometry<6):
           drawTextRadialRaster(12.5,angle_deg, const_name)

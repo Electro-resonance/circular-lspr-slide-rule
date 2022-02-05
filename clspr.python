@@ -549,6 +549,7 @@ while True:
             default_zoom=after_help_zoom
             zoom_distance=default_zoom
             zoom_location=-1000
+            mpos=[0,0] #Reset mouse position
 
     #TODO: This becomes a case statement in Python3.10
     if keypress[pygame.K_z]:
@@ -684,6 +685,7 @@ while True:
     #Focus after a zoom change
     if (zoom_location!=prev_zoom_location):
         zoom_distance=-20
+        mpos=[0,0]
 
     if (check_mouse()):
        req_update=True

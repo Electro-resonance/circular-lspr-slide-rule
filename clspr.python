@@ -58,9 +58,13 @@ zoom_distance=-50
 mpos = [0,0]
 viewPos = [0,0]
 mouse_radial = [0,0]
+mouse_hold_pos = [0,0]
+mouse_button = [0,0,0]
 
 zoom_pos=[0,0,-100]
 zoom_set=[0,0,-50]
+
+rotation = 0.0
 
 # =============================================================================
 # CSV Reader Function                                 
@@ -126,6 +130,23 @@ def read_csv():
         #Create a list of constants
         const=(const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory)
         constants.append(const)
+
+# =============================================================================
+# Misc Functions
+# =============================================================================
+
+def angle_difference(a,b):
+   while b<-180:
+      b+=360
+   return min(360 - abs(a - b), abs(a - b))
+
+def angle_movement(a,b):
+   while b<-180:
+      b+=360
+   diff=a-b
+   if abs(diff)>90:
+      diff=0
+   return diff
 
 # =============================================================================
 # Constant List Modification Function
@@ -246,7 +267,8 @@ def draw_circle(r1,r2, h, num_slices,width,offset,colour):
 # =============================================================================
 
 def check_mouse():
-    global mpos, viewPos , mouse_radial
+    global mpos, viewPos , mouse_radial, mouse_button, rotation, mouse_hold_pos, rotate
+    changed=False
     newpos = pygame.mouse.get_pos()
     if (newpos[0]!=mpos[0] or newpos[1]!=mpos[1]):
        mpos=newpos
@@ -259,8 +281,16 @@ def check_mouse():
        if (mouse_ang>180):
            mouse_ang=mouse_ang-360
        mouse_radial = [ math.sqrt(viewPos[0]*viewPos[0]+viewPos[1]*viewPos[1]) , mouse_ang ]
-       return True
-    return False
+       changed=True
+    
+    prev_mouse_button=mouse_button
+    mouse_button = pygame.mouse.get_pressed()
+    if (mouse_button[0]==True):
+       rotation-=angle_movement(mouse_radial[1],mouse_hold_pos[1])*5
+       mouse_hold_pos=mouse_radial
+       rotate=0
+       changed=True
+    return changed
 
 # =============================================================================
 # Update screen
@@ -289,11 +319,6 @@ def update_zoom():
        zoom_pos=zoom_set
 
    glTranslate(zoom_pos[0], zoom_pos[1], zoom_pos[2])
-
-def angle_difference(a,b):
-   while b<-180:
-      b+=360
-   return min(360 - abs(a - b), abs(a - b))
 
 def update_display():
     global mpos, mouse_radial, viewPos
@@ -442,7 +467,6 @@ font = pygame.font.SysFont('arial', 12)
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-rotation = 0.0
 rotate=1
 zoom_location=-1000
 disp_symbol=1

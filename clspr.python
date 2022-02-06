@@ -161,6 +161,7 @@ def read_csv():
 
 def read_log_constants():
     global ln_constants
+    factor=1
     ln_constants=[]
     for exp in range(-7,7):
         for dec in range(1,10):
@@ -278,9 +279,13 @@ def label_length(s):
 
 def drawTextRadial(r,angle, text,scale,colour):
     text_angle=angle
+    while (text_angle>180):
+        text_angle-=360
+    while (text_angle<-180):
+        text_angle+=360
     dir=0
-    if (angle>90 or angle<-90):
-         text_angle-=180
+    if (text_angle>90 or text_angle<-90):
+         text_angle+=180
          dir=1
          len=label_length(text)
          r+=len*scale

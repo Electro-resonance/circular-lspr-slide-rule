@@ -147,8 +147,10 @@ def read_csv():
         category=row['category']
         subcategory=row['subcategory']
 
+        gradule=0
+
         #Create a list of constants
-        const=(const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory)
+        const=(const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
         fundamental_constants.append(const)
 
         read_log_constants()
@@ -181,14 +183,17 @@ def read_log_constants():
                 source="natural log"
                 uncertainty=0
                 units=" "
+                gradule=0
                 if (dec==1):
-                    category=" "
+                    gradule=0
                 elif (dec==5):
-                    category="f"
+                    gradule=0.3
                 else:
-                    category="g"
+                    gradule=0.6
+                category=" "
                 subcategory=" "
-                const=(name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory)
+
+                const=(name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
                 ln_constants.append(const)
        
 
@@ -218,7 +223,7 @@ def adjust_factors():
     if (abs(factor)<1E-4):
          factor=1E-4 #Prevent factors that result in divide by zero.
     for idx in range(len(constants)):
-        (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory)= constants[idx]
+        (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)= constants[idx]
         if (log_mode==False and ln_mode==False):
             angle=2 * math.atan(log_const/factor)
             angle_deg=angle/math.pi*180
@@ -226,7 +231,7 @@ def adjust_factors():
             angle_deg=log_const/factor
             if(const_name.find("+/- Infinity")!=-1):
                 angle_deg=180
-        constants[idx]=(const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory)
+        constants[idx]=(const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
 
  
 # =============================================================================
@@ -294,7 +299,7 @@ def draw_radial(r1,r2, h, num_slices,width,offset,colour,ang_width):
     z = -h/2.0
     angle = offset/180*math.pi
     width1=ang_width/180*math.pi
-    #angle-=width1/2 #centre the angle  y offsetting the rectangle
+    #angle-=width1 /2 #centre the angle  y offsetting the rectangle
     for i in range(int(n)):
         angle = 2 * math.pi * (i/n)/width + offset/180*math.pi
         x1 = r1 * math.cos(angle + width1)
@@ -473,12 +478,7 @@ def update_display():
     detail_offset=150
     last_angle=[0,0,0,0,0,0]
 
-    for (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory) in constants:
-       gradule=0
-       if ("g" in category):
-           gradule=0.6
-       elif ("f" in category):
-           gradule=0.3
+    for (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule) in constants:
 
        if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0)):
            draw_radial(8+gradule,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,0.5)
@@ -515,10 +515,7 @@ def update_display():
        else:
           rad_len=12
 
-       if ("g" in category):
-          rad_len=11
-       elif ("f" in category):
-          rad_len=11.5
+       rad_len-=gradule*2.0
 
        #Text to display on start-up zoom setting
        if (zoom_location>-1000 or disp_symbol==3):

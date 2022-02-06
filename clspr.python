@@ -86,6 +86,9 @@ red=[0.75,0,0]
 help_state=0
 help_scaling=0
 
+mouse_ang_width=0.6
+cursor_ang_width=10
+
 # =============================================================================
 # CSV Reader Function                                 
 # ============================================================================= 
@@ -347,7 +350,7 @@ def draw_circle(r1,r2, h, num_slices,width,offset,colour):
 
 def check_mouse():
     global mpos, viewPos , mouse_radial, mouse_button, rotation, mouse_hold_pos, rotate, zoom_distance
-    global prev_mouse_button
+    global prev_mouse_button, cursor_angle, cursor_ang_width
     changed=False
     newpos = pygame.mouse.get_pos()
     if (newpos[0]!=mpos[0] or newpos[1]!=mpos[1]):
@@ -370,7 +373,15 @@ def check_mouse():
     mouse_button = pygame.mouse.get_pressed()
     #Ignore the initial mouse press
     if (mouse_button[0]==True and prev_mouse_button[0]==True):
-       rotation-=angle_movement(mouse_radial[1],mouse_hold_pos[1])*5
+
+       #Detect mouse over cursor
+       if(mouse_radial[0]>=5 and mouse_radial[0]<7) or (mouse_radial[0]>10.5 and mouse_radial[0]<15):
+            cursor_diff=angle_difference(mouse_radial[1],cursor_angle)
+            if(cursor_diff<cursor_ang_width):
+                cursor_angle=mouse_radial[1]
+       else:
+           #Mouse over inner wheel
+           rotation-=angle_movement(mouse_radial[1],mouse_hold_pos[1])*5
        mouse_hold_pos=mouse_radial
        rotate=0
        changed=True
@@ -421,7 +432,7 @@ def update_zoom():
 
 
 def update_display():
-    global mpos, mouse_radial, viewPos, zooming_complete
+    global mpos, mouse_radial, viewPos, zooming_complete, mouse_ang_width
     glClear(GL_COLOR_BUFFER_BIT)
     glClear(GL_DEPTH_BUFFER_BIT)
     glEnable(GL_DEPTH_TEST)
@@ -469,8 +480,6 @@ def update_display():
     hght=0.2
     wd=800
     overlap=0.05
-
-    mouse_ang_width=0.6
 
     if (not log_mode and not ln_mode):
         #Marker for 23 degrees which is maximum angle for polarisation entanglement
@@ -555,6 +564,7 @@ def update_display():
        for ind in [4,0,-1]:
           last_angle[ind+1]=last_angle[ind]
        last_angle[0]=angle_deg
+
 
     if(zooming_complete):
           help_display()

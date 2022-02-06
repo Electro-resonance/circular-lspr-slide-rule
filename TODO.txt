@@ -1,18 +1,17 @@
 
-
-Hover over with a mouse and show constant at mouse location.
-Navigate zoom with mouse.
-Text box info about selected constant.
 Groups of constants by category (energy, particles, mass, forces etc...)
-Help menus.
 Drop down menus.
 Better 3D fonts (limited choice currently in OpenGL).
 Output measurements to a file.
 Update csv data file to include CODATA 2018 updates.
 Reduce OpenGL requirements for redrawing on rotation or keypresses.
-Investigate geometrie and find more mathematical relationships.
+Investigate geometries and find more mathematical relationships.
 Graphical shading.
 
 Future:
 Inside 3D AR view of a cylinder with two inward facing wheels with text.
 Outside 3D view of a cylindrical codex.
+
+Musical Analysis
+Musical log base 12 and log base 2 mode
+Display musical temperaments

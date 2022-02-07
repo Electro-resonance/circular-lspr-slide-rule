@@ -418,7 +418,7 @@ def check_mouse():
     if (mouse_button[0]==True and prev_mouse_button[0]==True):
 
        #Detect mouse over cursor
-       if(mouse_radial[0]>=5 and mouse_radial[0]<7) or (mouse_radial[0]>10.5 and mouse_radial[0]<15):
+       if(mouse_radial[0]>=5 and mouse_radial[0]<7) or (mouse_radial[0]>10.5 and mouse_radial[0]<30):
             cursor_diff=angle_difference(mouse_radial[1],cursor_angle)
             if(cursor_diff<cursor_ang_width):
                 cursor_angle=mouse_radial[1]

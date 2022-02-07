@@ -91,6 +91,9 @@ help_scaling=0
 
 mouse_ang_width=0.6
 
+mode_state=0
+mode_change=0
+
 # =============================================================================
 # CSV Reader Function                                 
 # ============================================================================= 
@@ -235,7 +238,9 @@ def read_music_constants():
             gradule=0
             if (dec==0):
                 gradule=0
-            elif (dec==5):
+            elif (dec==6 or dec==8): #Diminished Fifth or Augmented Fifth
+                gradule=0.4
+            elif (dec==7):#Perfect Fifth
                 gradule=0.3
             else:
                 gradule=0.6
@@ -476,7 +481,7 @@ def update_zoom():
 
 
 def update_display():
-    global mpos, mouse_radial, viewPos, zooming_complete, mouse_ang_width
+    global mpos, mouse_radial, viewPos, zooming_complete, mouse_ang_width, mode_state
 
     slice=1
     hght=0.2
@@ -500,6 +505,15 @@ def update_display():
     #Needs a more meaningful display
     drawText(20,40,str(factor) ,14)
     drawText(20,20,str(zoom_distance) ,14)
+
+    if (mode_state==0):
+        drawText(20,770,"Mode: LSPR" ,24)
+    elif(mode_state==1):
+        drawText(20,770,"Mode: ArcTan Natural Log" ,24)
+    elif(mode_state==2):
+        drawText(20,770,"Mode: Natural Log" ,24)
+    elif(mode_state==3):
+        drawText(20,770,"Mode: Log Base 12 (Music)" ,24)
 
     #Draw the cursor
     draw_radial(5,14,0.205,1,wd,cursor_angle,red2,0.25)
@@ -549,7 +563,7 @@ def update_display():
 
     for (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule) in constants:
 
-       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0)):
+       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==2) and len(symbol)>0)):
            draw_radial(8+gradule,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,spoke_width)
            draw_radial(10-overlap,12-gradule,hght,slice,wd,angle_deg,const_colour,spoke_width)
            #draw_radial(9+gradule,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,spoke_width)
@@ -587,7 +601,7 @@ def update_display():
        rad_len-=gradule*2.0
 
        #Text to display on start-up zoom setting
-       if (zoom_location>-1000 or disp_symbol==3):
+       if (zoom_location>-1000 or disp_symbol==2):
           text_offset=0.3
 
           #Count overlap of text
@@ -609,7 +623,7 @@ def update_display():
           #inner label
           drawTextRadial(10+text_offset+extra_offset,angle_deg-rotation/5,symbol,0.0015,yellow)
 
-       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0) or rad_len==13.5):
+       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==2) and len(symbol)>0) or rad_len==13.5):
           #Draw outer circle spokes
           draw_radial(10-overlap,rad_len,hght,slice,wd,angle_deg,const_colour,spoke_width)
 
@@ -654,14 +668,12 @@ def help_display():
    drawText(help_x,help_y-6*vert_space," w = return to -180 degree rotation point",fs)
    drawText(help_x,help_y-7*vert_space," e = cancel zoom",fs)
    drawText(help_x,help_y-8*vert_space," 1,2,3,4,5,6,7,8,9,0 = zoom on sectors of the circular slide rule",fs)
+   drawText(help_x,help_y-9*vert_space," s = pan in positive direction around the wheel",fs)
 
-   drawText(help_x,help_y-10*vert_space," f = display basic symbols",fs)
-   drawText(help_x,help_y-11*vert_space," g,\ = display all symbols",fs)
-   drawText(help_x,help_y-12*vert_space," [ ] - + = slide rule cursor",fs)
-   drawText(help_x,help_y-13*vert_space," a = natural log (LSPR mode)",fs)
-   drawText(help_x,help_y-14*vert_space," s = arctangent natural log mode",fs)
-   drawText(help_x,help_y-15*vert_space," j = natural log (conventional slide rule) mode",fs)
-   drawText(help_x,help_y-16*vert_space," / = log base 12 (music) mode",fs)
+   drawText(help_x,help_y-11*vert_space," f = toggle symbol modes (including number of constants)",fs)
+
+   drawText(help_x,help_y-13*vert_space," [ ] - + = slide rule cursor",fs)
+   drawText(help_x,help_y-14*vert_space," a = toggle mode: LSPR, arctangent log, natural log, log base12",fs)
 
 
    drawText(help_x,help_y-17.5*vert_space," r,t,y,u,i - experimental arctan/ln scaling factors",fs)
@@ -738,13 +750,6 @@ while True:
     elif keypress[pygame.K_e]:
        zoom_distance=default_zoom
        zoom_location=-1000
-    elif keypress[pygame.K_s]:
-       constants=fundamental_constants
-       demo_mode=False
-       factor=19*math.sqrt(2)
-       log_mode=False
-       ln_mode=False
-       adjust_factors()
     elif keypress[pygame.K_r]:
        if (log_mode or ln_mode):
           factor=1.0
@@ -776,25 +781,46 @@ while True:
           factor=82.37
        adjust_factors()
     elif keypress[pygame.K_a]:
-       constants=fundamental_constants
-       log_mode=True
-       ln_mode=False
-       demo_mode=False
-       factor=1.0
-       adjust_factors()
+       if((pygame.time.get_ticks()-mode_change)>200):
+           mode_state+=1
+           if (mode_state>3):
+               mode_state=0
+           if(mode_state==0):
+               constants=fundamental_constants
+               log_mode=True
+               ln_mode=False
+               factor=1.0
+           elif(mode_state==1):
+               constants=fundamental_constants
+               factor=19*math.sqrt(2)
+               log_mode=False
+               ln_mode=False
+           elif(mode_state==2):
+               constants=ln_constants
+               ln_mode=True
+               log_mode=False
+               factor=0.1
+           elif(mode_state==3):
+               constants=music_constants
+               ln_mode=True
+               log_mode=False
+               factor=0.01
+           demo_mode=False
+           adjust_factors()
+           #print (mode_state)
+           mode_change=pygame.time.get_ticks()
+    elif keypress[pygame.K_s]:
+       if((pygame.time.get_ticks()-mode_change)>200):
+           zoom_location+=5
+           if(zoom_location)>180:
+               zoom_location-=360
+           mode_change=pygame.time.get_ticks()
     elif keypress[pygame.K_j]:
        constants=ln_constants
        ln_mode=True
        log_mode=False
        demo_mode=False
        factor=0.1
-       adjust_factors()
-    elif keypress[pygame.K_SLASH]:
-       constants=music_constants
-       ln_mode=True
-       log_mode=False
-       demo_mode=False
-       factor=0.01
        adjust_factors()
     elif keypress[pygame.K_k]:
        factor+=0.1
@@ -828,12 +854,12 @@ while True:
        zoom_location=-144
     elif keypress[pygame.K_0]:
        zoom_location=180
-    elif keypress[pygame.K_g]:
-       disp_symbol=0
     elif keypress[pygame.K_f]:
-       disp_symbol=1
-    elif keypress[pygame.K_BACKSLASH]:
-       disp_symbol=3
+       if((pygame.time.get_ticks()-mode_change)>200):
+           disp_symbol+=1
+           if (disp_symbol>2):
+              disp_symbol=0
+           mode_change=pygame.time.get_ticks()
     elif keypress[pygame.K_v]:
        demo_mode=True
        rotate=1

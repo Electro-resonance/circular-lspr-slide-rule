@@ -50,6 +50,7 @@ factor=19*math.sqrt(2)
 ln_constants=[]
 fundamental_constants=[]
 constants=[]
+music_constants=[]
 
 math_e=math.exp(1)
 math_phi=(1+math.sqrt(5))/2
@@ -77,7 +78,8 @@ zoom_set=[0,0,default_zoom]
 rotation = 0.0
 
 cursor_angle = 0.0
-cursor_step=0.1
+cursor_stepi = 0.1
+cursor_ang_width = 10
 
 yellow=[1,1,0]
 white=[1,1,1]
@@ -87,7 +89,6 @@ help_state=0
 help_scaling=0
 
 mouse_ang_width=0.6
-cursor_ang_width=10
 
 # =============================================================================
 # CSV Reader Function                                 
@@ -157,6 +158,7 @@ def read_csv():
         fundamental_constants.append(const)
 
         read_log_constants()
+        read_music_constants()
 
 # =============================================================================
 # Natural Logarithm Scale
@@ -164,7 +166,7 @@ def read_csv():
 
 def read_log_constants():
     global ln_constants
-    factor=1
+    factor=0.1
     ln_constants=[]
     for exp in range(-7,7):
         for dec in range(1,10):
@@ -200,6 +202,47 @@ def read_log_constants():
                 const=(name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
                 ln_constants.append(const)
        
+# =============================================================================
+# Music
+# =============================================================================
+
+def read_music_constants():
+    global music_constants
+    factor=1
+    music_constants=[]
+    log_base=math.log(12)
+    for exp in range(0,10):
+        for dec in range(0,11):
+            fvalue=(1+dec/12)*(2**exp)
+            name=str(dec)+"E"+str(exp)
+            #print(name+"="+str(fvalue))
+            if(fvalue==0):
+                log_const=1
+            elif (fvalue>0):
+                log_const=math.log(fvalue)/log_base
+            else:
+                log_const=-1* math.log(-fvalue)/log_base
+            angle_deg=log_const/factor
+            const_colour=[1,1,1]
+            geometry=0
+            fs="{:.5f}"
+            value=fs.format(dec)
+            symbol=fs.format(fvalue)
+            source="base 12 log"
+            uncertainty=0
+            units=" "
+            gradule=0
+            if (dec==0):
+                gradule=0
+            elif (dec==5):
+                gradule=0.3
+            else:
+                gradule=0.6
+            category=" "
+            subcategory=" "
+
+            const=(name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
+            music_constants.append(const)
 
 # =============================================================================
 # Misc Functions
@@ -534,26 +577,25 @@ def update_display():
        #Text to display on start-up zoom setting
        if (zoom_location>-1000 or disp_symbol==3):
           text_offset=0.3
-          if (disp_symbol!=0):
 
-              #Count overlap of text
-              extra_overlap=0
-              for ang in last_angle:
-                  if (abs(ang-angle_deg)<0.2):
-                     extra_overlap+=0.5
+          #Count overlap of text
+          extra_overlap=0
+          for ang in last_angle:
+              if (abs(ang-angle_deg)<0.2):
+                 extra_overlap+=0.5
 
-              #Work out offset for inner labels
-              if (log_mode==True):
-                  extra_offset=-3-len(symbol)*0.0015-extra_overlap
-              elif (ln_mode==True):
-                  extra_offset=-3-len(symbol)*0.0015
-              else:
-                  extra_offset=0
+          #Work out offset for inner labels
+          if (log_mode==True):
+              extra_offset=-3-len(symbol)*0.0015-extra_overlap
+          elif (ln_mode==True):
+              extra_offset=-3-len(symbol)*0.0015
+          else:
+              extra_offset=0
 
-              #outer label
-              drawTextRadial(12+text_offset+extra_overlap,angle_deg, symbol,0.0015,yellow)
-              #inner label
-              drawTextRadial(10+text_offset+extra_offset,angle_deg-rotation/5,symbol,0.0015,yellow)
+          #outer label
+          drawTextRadial(12+text_offset+extra_overlap,angle_deg, symbol,0.0015,yellow)
+          #inner label
+          drawTextRadial(10+text_offset+extra_offset,angle_deg-rotation/5,symbol,0.0015,yellow)
 
        if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==3) and len(symbol)>0) or rad_len==13.5):
           #Draw outer circle spokes
@@ -593,7 +635,7 @@ def help_display():
       help_scaling=0
 
    help_x=230+help_scaling
-   help_y=590-(help_scaling*3)
+   help_y=610-(help_scaling*3)
    fs=int(18*(100-help_scaling)/100)
    vert_space=20*(100-help_scaling)/100
    drawText(help_x,help_y-0*vert_space,"Circular logarithmic slide rule for fundamental physical constants",fs+2)
@@ -610,14 +652,15 @@ def help_display():
    drawText(help_x,help_y-13*vert_space," a = natural log (LSPR mode)",fs)
    drawText(help_x,help_y-14*vert_space," s = arctangent natural log mode",fs)
    drawText(help_x,help_y-15*vert_space," j = natural log (conventional slide rule) mode",fs)
+   drawText(help_x,help_y-16*vert_space," / = log base 12 (music) mode",fs)
 
 
-   drawText(help_x,help_y-16.5*vert_space," r,t,y,u,i - experimental arctan/ln scaling factors",fs)
-   drawText(help_x,help_y-17.5*vert_space," v,b - demo modes",fs)
+   drawText(help_x,help_y-17.5*vert_space," r,t,y,u,i - experimental arctan/ln scaling factors",fs)
+   drawText(help_x,help_y-18.5*vert_space," v,b - demo modes",fs)
 
-   drawText(help_x,help_y-19*vert_space," k,l = course adjust factor for arctan scaling",fs)
-   drawText(help_x,help_y-20*vert_space," n,m = fine adjust factor for arctan scaling",fs)
-   drawText(help_x,help_y-21*vert_space," h=help",fs)
+   drawText(help_x,help_y-20*vert_space," k,l = course adjust factor for arctan scaling",fs)
+   drawText(help_x,help_y-21*vert_space," n,m = fine adjust factor for arctan scaling",fs)
+   drawText(help_x,help_y-22*vert_space," h=help",fs)
    drawText(help_x,help_y-23*vert_space,"                         --------> Press Any Key To Continue... <--------",fs)
 
 
@@ -736,6 +779,13 @@ while True:
        log_mode=False
        demo_mode=False
        factor=0.1
+       adjust_factors()
+    elif keypress[pygame.K_SLASH]:
+       constants=music_constants
+       ln_mode=True
+       log_mode=False
+       demo_mode=False
+       factor=0.01
        adjust_factors()
     elif keypress[pygame.K_k]:
        factor+=0.1

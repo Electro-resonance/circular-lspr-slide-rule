@@ -263,6 +263,9 @@ log_base_music=math.log(12)
 
 music_colours =[[153/255,255/255,0],[40/255,255/255,0],[0,255/255,232/255],[0,124/255,255/255],[5/255,0,255/255],[69/255,0,234/255],[87/255,0,158/255],[116/255,0,0],[179/255,0,0],[238/255,0,0],[255/255,99/255,0],[255/255,236/255,0],[153/255,255/255,0],[153/255,255/255,0],[0,0,0]]
 
+music_note=["F","F#","G","G#","A","A#","B","C","C#","D","D#","E"]
+music_pitch=[349.23,369.99,392,415.3,440,466.16,493.88,523.25,564.37,587.33,622.25,659.25]
+
 def read_music_constants():
     global music_constants,log_base_music
     factor=1
@@ -618,7 +621,16 @@ def update_display():
     #Draw a colour wheel 
     #See: https://pdfs.semanticscholar.org/e576/b8da181ff3e598618dfe440bb5c5904f61a2.pdf
     if (mode_state==3):
-        note_num=0
+        for octave in range(-1,10):
+            note_index=0
+            for note in music_pitch:
+                note=note/220 #Normalise to A
+                angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor
+                drawTextRadial(13.2,angle_deg,music_note[note_index],0.0015,yellow)
+                drawTextRadial(6.8,angle_deg-rotation/5,music_note[note_index],0.0015,yellow)
+                note_index+=1
+
+        note_num=-2
         note_num2_persist=14 #black
         note_num3_persist=14 #black
         note_num4_persist=14 #black
@@ -627,7 +639,7 @@ def update_display():
                 angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor-0.2
                 angle_deg_triplet=angle_deg-0.7
                 note_num1=note_num%12
-                note_num5=note_num-12
+                note_num5=note_num-13
                 note_num2=note_num5%3
                 #Triplet
                 if (note_num2==0):
@@ -641,7 +653,7 @@ def update_display():
                 if (note_num4==0):
                     note_num4_persist=note_num1
                 if (octave>=0):
-                    draw_radial(6,7,hght,slice,wd,angle_deg-rotation/5,music_colours[note_num1],1)
+                    draw_radial(6,6.65,hght-0.6,slice,wd,angle_deg-rotation/5,music_colours[note_num1],1)
                     draw_radial(5,6,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num2_persist],2.7)
                     draw_radial(4,5,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num3_persist],2.7)
                     draw_radial(3,4,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num4_persist],2.7)

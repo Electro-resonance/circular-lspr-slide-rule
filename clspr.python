@@ -627,7 +627,9 @@ def update_display():
                 note=note/220 #Normalise to A
                 angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor
                 drawTextRadial(13.2,angle_deg,music_note[note_index],0.0015,yellow)
+                draw_radial(13.0,13.1,hght-0.6,slice,wd,angle_deg,yellow,0.1)
                 drawTextRadial(6.8,angle_deg-rotation/5,music_note[note_index],0.0015,yellow)
+                draw_radial(6.7,6.79,hght-0.6,slice,wd,angle_deg-rotation/5,yellow,0.1)
                 note_index+=1
 
         note_num=-2

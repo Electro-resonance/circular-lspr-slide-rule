@@ -575,6 +575,48 @@ def update_display():
     draw_radial(3,14,0.205,1,wd,cursor_angle,red2,0.25)
     draw_radial(3,13.9,0.199,1,wd,cursor_angle+0.075,red,0.1)
 
+    #Cursor details
+    measure_angle1=cursor_angle
+    measure_angle2=cursor_angle+rotation/5
+    while (measure_angle1>180):
+       measure_angle1-=360
+    while (measure_angle2>180):
+       measure_angle2-=360
+    while (measure_angle1<-180):
+       measure_angle1+=360
+    while (measure_angle1<-360):
+       measure_angle2+=360
+    if(mode_state==3):
+        if(measure_angle1<0):
+            measure_angle1+=360
+        if(measure_angle2<0):
+            measure_angle2+=360
+        cursor1=round(math.exp(measure_angle1*factor*log_base_music),3)
+        cursor2=round(math.exp(measure_angle2*factor*log_base_music),3)
+        drawText(950,780,"Cursor A: " +str(cursor1),14)
+        drawText(950,760,"Cursor B: " +str(cursor2),14)
+    elif(log_mode==True or ln_mode==True):
+        if(log_mode==True):
+            if(measure_angle1>=0):
+                cursor1=math.exp(measure_angle1*factor)
+            else:
+                cursor1=-math.exp(-measure_angle1*factor)
+            if(measure_angle2>=0):
+                cursor2=math.exp(measure_angle2*factor)
+            else:
+                cursor2=-math.exp(-measure_angle2*factor)
+        else: #ln_mode
+                cursor1=math.exp(measure_angle1*factor) 
+                cursor2=math.exp(measure_angle2*factor)
+        cursor1str="{:.2e}".format(cursor1)
+        cursor2str="{:.2e}".format(cursor2)
+        drawText(950,780,"Cursor A: " +cursor1str,14)
+        drawText(950,760,"Cursor B: " +cursor2str,14)
+    else:
+        cursor1=0
+        cursor2=0
+    
+
 
     if (position_debug):
         drawText(920,70,str(round(mouse_radial[0],3)),14 )

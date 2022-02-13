@@ -24,6 +24,7 @@
 # CSV reader: https://docs.python.org/3/library/csv.html
 # Circle examples: https://stackoverflow.com/questions/25423268/i-have-created-a-circle-from-lines-in-opengl-but-it-shows-holes-at-outer-edges
 # Mouse with OpenGL: https://stackoverflow.com/questions/46801701/how-to-find-pygame-window-coordinates-of-an-opengl-vertice
+# TextInput: https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
 
 # =============================================================================
 # Imports
@@ -165,6 +166,55 @@ def read_csv():
         read_music_constants()
 
 # =============================================================================
+# Text Input
+# =============================================================================
+
+COLOR_INACTIVE = pygame.Color('lightskyblue3')
+COLOR_ACTIVE = pygame.Color('dodgerblue2')
+
+class InputBox:
+
+    def __init__(self, x, y, w, h, text=''):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.color = COLOR_INACTIVE
+        self.text = text
+        self.txt_surface = font.render(text, True, self.color)
+        self.active = False
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # If the user clicked on the input_box rect.
+            if self.rect.collidepoint(event.pos):
+                # Toggle the active variable.
+                self.active = not self.active
+            else:
+                self.active = False
+            # Change the current color of the input box.
+            self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
+        if event.type == pygame.KEYDOWN:
+            if self.active:
+                if event.key == pygame.K_RETURN:
+                    print(self.text)
+                    self.text = ''
+                elif event.key == pygame.K_BACKSPACE:
+                    self.text = self.text[:-1]
+                else:
+                    self.text += event.unicode
+                # Re-render the text.
+                self.txt_surface = FONT.render(self.text, True, self.color)
+
+    def update(self):
+        # Resize the box if the text is too long.
+        width = max(200, self.txt_surface.get_width()+10)
+        self.rect.w = width
+
+    def draw(self, screen):
+        # Blit the text.
+        screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
+        # Blit the rect.
+        pygame.draw.rect(screen, self.color, self.rect, 2)
+
+# =============================================================================
 # Natural Logarithm Scale
 # =============================================================================
 
@@ -209,23 +259,25 @@ def read_log_constants():
 # =============================================================================
 # Music
 # =============================================================================
+log_base_music=math.log(12)
+
+music_colours =[[153/255,255/255,0],[40/255,255/255,0],[0,255/255,232/255],[0,124/255,255/255],[5/255,0,255/255],[69/255,0,234/255],[82/255,0,0],[116/255,0,0],[179/255,0,0],[238/255,0,0],[255/255,99/255,0],[255/255,236/255,0],[153/255,255/255,0],[153/255,255/255,0],[0,0,0]]
 
 def read_music_constants():
-    global music_constants
+    global music_constants,log_base_music
     factor=1
     music_constants=[]
-    log_base=math.log(12)
     for exp in range(0,10):
-        for dec in range(0,11):
+        for dec in range(0,12):
             fvalue=(1+dec/12)*(2**exp)
             name=str(dec)+"E"+str(exp)
             #print(name+"="+str(fvalue))
             if(fvalue==0):
                 log_const=1
             elif (fvalue>0):
-                log_const=math.log(fvalue)/log_base
+                log_const=math.log(fvalue)/log_base_music
             else:
-                log_const=-1* math.log(-fvalue)/log_base
+                log_const=-1* math.log(-fvalue)/log_base_music
             angle_deg=log_const/factor
             const_colour=[1,1,1]
             geometry=0
@@ -482,6 +534,7 @@ def update_zoom():
 
 def update_display():
     global mpos, mouse_radial, viewPos, zooming_complete, mouse_ang_width, mode_state
+    global window, input_boxes
 
     slice=1
     hght=0.2
@@ -516,8 +569,8 @@ def update_display():
         drawText(20,770,"Mode: Log Base 12 (Music)" ,24)
 
     #Draw the cursor
-    draw_radial(5,14,0.205,1,wd,cursor_angle,red2,0.25)
-    draw_radial(8,13.9,0.199,1,wd,cursor_angle+0.075,red,0.1)
+    draw_radial(3,14,0.205,1,wd,cursor_angle,red2,0.25)
+    draw_radial(3,13.9,0.199,1,wd,cursor_angle+0.075,red,0.1)
 
 
     if (position_debug):
@@ -560,6 +613,37 @@ def update_display():
     if(zoom_distance>-30):
        spoke_width=((-zoom_distance-3)/(30-4))*0.6
        mouse_ang_width=spoke_width+0.1
+
+    #Music mode
+    #Draw a colour wheel 
+    #See: https://pdfs.semanticscholar.org/e576/b8da181ff3e598618dfe440bb5c5904f61a2.pdf
+    if (mode_state==3):
+        note_num=0
+        note_num2_persist=14 #black
+        note_num3_persist=14 #black
+        note_num4_persist=14 #black
+        for octave in range(0,10):
+            for note in [1.0,1.0535,1.1250,1.1852,1.2656,1.3333,1.4142,1.5000,1.5803,1.6875,1.7778,1.8984]:
+                angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor
+                note_num1=note_num%12
+                draw_radial(6,7,hght,slice,wd,angle_deg-rotation/5,music_colours[note_num1],1)
+                note_num2=note_num%3
+                #Triplet
+                if (note_num2==1):
+                    note_num2_persist=note_num1+1
+                draw_radial(5,6,hght,slice,wd,angle_deg-rotation/5,music_colours[note_num2_persist],3.5)
+                #Triplet of triplets
+                note_num3=note_num%9
+                if (note_num3==1):
+                    note_num3_persist=note_num1+1
+                draw_radial(4,5,hght,slice,wd,angle_deg-rotation/5,music_colours[note_num3_persist],3.5)
+                #Triplet of triplet of triplets
+                note_num4=note_num%27
+                if (note_num4==1):
+                    note_num4_persist=note_num1+1
+                draw_radial(3,4,hght,slice,wd,angle_deg-rotation/5,music_colours[note_num4_persist],3.5)
+                note_num+=1
+
 
     for (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule) in constants:
 
@@ -634,6 +718,8 @@ def update_display():
     if(zooming_complete):
           help_display()
 
+    for box in input_boxes:
+            box.draw(screen)
     pygame.display.flip()
 
 # =============================================================================
@@ -699,6 +785,12 @@ request_help()
 screen = pygame.display.set_mode((width, height), OPENGL | DOUBLEBUF)
 clock = pygame.time.Clock()
 font = pygame.font.SysFont('arial', 12)
+
+input_box1 = InputBox(100, 100, 140, 32)
+input_box2 = InputBox(100, 300, 140, 32)
+input_boxes = [input_box1, input_box2]
+done = False
+
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
@@ -707,10 +799,17 @@ zoom_location=-1000
 disp_symbol=1
 
 while True:
-    for event in pygame.event.get():
+
+    event_list = pygame.event.get()
+    for event in event_list:
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        for box in input_boxes:
+            box.handle_event(event)
+
+    for box in input_boxes:
+        box.update()
 
     keypress = pygame.key.get_pressed()
     req_update=True
@@ -922,6 +1021,6 @@ while True:
 
     if (req_update or zooming):
        update_display()
-
+    
     clock.tick(60)
     pygame.event.pump() # process event queue

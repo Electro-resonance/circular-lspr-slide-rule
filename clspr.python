@@ -295,10 +295,10 @@ def read_music_constants():
             gradule=0
             if (dec==0):
                 gradule=0
-            elif (dec==6 or dec==8): #Diminished Fifth or Augmented Fifth
+            elif (dec==5 or dec==7): #Diminished Fifth or Augmented Fifth
                 gradule=0.4
-            elif (dec==7):#Perfect Fifth
-                gradule=0.3
+            elif (dec==6):#Perfect Fifth
+                gradule=0.25
             else:
                 gradule=0.6
             category=" "

@@ -268,6 +268,9 @@ music_note=["F","F#","G","G#","A","A#","B","C","C#","D","D#","E"]
 music_pitch=[349.23,369.99,392,415.3,440,466.16,493.88,523.25,554.37,587.33,622.25,659.25]
 music_intervals=[" "," "," "," "," "," "," ","Perfect unison","Minor second","Major second", "Minor third", "Major third","Perfect fourth","Augmented fourth","Perfect Fifth","Minor sixth","Major sixth","Minor seventh","Major seventh","Perfect octave"," "," "," "," "," "," "," "," "," "," "," "," "]
 
+svara_note=["ma","pa","dha","ni","sa","ri","ga"]
+svara_pitch=[341.333,384,426.667,480,512,576,640]
+
 def read_music_constants():
     global music_constants,log_base_music
     factor=1
@@ -294,13 +297,13 @@ def read_music_constants():
             units=" "
             gradule=0
             if (dec==0):
-                gradule=0
+                gradule=0.3
             elif (dec==5 or dec==7): #Diminished Fifth or Augmented Fifth
-                gradule=0.4
+                gradule=0.5
             elif (dec==6):#Perfect Fifth
-                gradule=0.25
+                gradule=0.35
             else:
-                gradule=0.6
+                gradule=0.7
             category=" "
             subcategory=" "
 
@@ -597,6 +600,12 @@ def update_display():
         cursor2=round(math.exp(measure_angle2*factor*log_base_music),3)
         drawText(950,780,"Cursor A: " +str(cursor1),14)
         drawText(950,760,"Cursor B: " +str(cursor2),14)
+        drawText(960,740,"A: " +str(round(cursor1*256,2))+"Hz",14)
+        drawText(960,720,"B: " +str(round(cursor2*256,2))+"Hz",14)
+        drawText(960,700,"A: " +str(round(cursor1*261.63,2))+"Hz",14)
+        drawText(960,680,"B: " +str(round(cursor2*261.63,2))+"Hz",14)
+        drawText(960,660,"A: " +str(round(cursor1*264,2))+"Hz",14)
+        drawText(960,640,"B: " +str(round(cursor2*264,2))+"Hz",14)
     elif(log_mode==True or ln_mode==True):
         if(log_mode==True):
             if(measure_angle1>=0):
@@ -666,17 +675,28 @@ def update_display():
     #See: https://pdfs.semanticscholar.org/e576/b8da181ff3e598618dfe440bb5c5904f61a2.pdf
     if (mode_state==3):
         for octave in range(-1,10):
+            svara=0
+            for note_name in svara_note:
+                freq=svara_pitch[svara]
+                svara+=1
+                note=freq/256 #Normalise to C
+                angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor
+                drawTextRadial(13.3,angle_deg,note_name,0.0015,yellow)
+                draw_radial(13.1,13.2,hght-0.6,slice,wd,angle_deg,yellow,0.1)
+
+
+        for octave in range(-1,10):
             note_index=0
             for note in music_pitch:
                 note=note/261.63 #Normalise to C
                 angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor
-                drawTextRadial(13.2,angle_deg,music_note[note_index],0.0015,yellow)
+                drawTextRadial(11.9,angle_deg,music_note[note_index],0.0015,yellow)
                 if(octave==-1):
                     drawTextRadial(13.8,angle_deg,music_intervals[note_index],0.0015,yellow)
                 if(octave==0):
                     drawTextRadial(13.8,angle_deg,music_intervals[note_index+12],0.0015,yellow)
 
-                draw_radial(13.0,13.1,hght-0.6,slice,wd,angle_deg,yellow,0.1)
+                draw_radial(11.7,11.8,hght-0.6,slice,wd,angle_deg,yellow,0.1)
                 drawTextRadial(6.8,angle_deg-rotation/5,music_note[note_index],0.0015,yellow)
                 draw_radial(6.7,6.79,hght-0.6,slice,wd,angle_deg-rotation/5,yellow,0.1)
                 note_index+=1
@@ -692,8 +712,6 @@ def update_display():
                 note_num1=note_num%12
                 if (octave>=0):
                     draw_radial(6,6.65,hght-0.6,slice,wd,angle_deg-rotation/5,music_colours[note_num1],1)
-
-
       
                 note_num5=note_num
                 note_num2=note_num5%4
@@ -715,9 +733,9 @@ def update_display():
                     if(note_num4_persist>=9):
                        note_num4_persist=0
                 if (octave>=0):
-                    draw_radial(5,6,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num2_persist],2.7)
-                    draw_radial(4,5,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num3_persist],2.7)
-                    draw_radial(3,4,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num4_persist],2.7)
+                    draw_radial(5,5.95,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num2_persist],2.7)
+                    draw_radial(4,4.95,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num3_persist],2.7)
+                    draw_radial(3,3.95,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num4_persist],2.7)
                 note_num+=1
 
 
@@ -766,9 +784,10 @@ def update_display():
 
           #Count overlap of text
           extra_overlap=0
-          for ang in last_angle:
-              if (abs(ang-angle_deg)<0.2):
-                 extra_overlap+=0.5
+          if(mode_state!=3):
+              for ang in last_angle:
+                  if (abs(ang-angle_deg)<0.2):
+                     extra_overlap+=0.5
 
           #Work out offset for inner labels
           if (log_mode==True):

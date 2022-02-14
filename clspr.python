@@ -265,6 +265,7 @@ music_colours =[[153/255,255/255,0],[40/255,255/255,0],[0,255/255,232/255],[0,12
 
 music_note=["F","F#","G","G#","A","A#","B","C","C#","D","D#","E"]
 music_pitch=[349.23,369.99,392,415.3,440,466.16,493.88,523.25,564.37,587.33,622.25,659.25]
+music_intervals=[" "," "," "," ","Perfect unison","Minor second","Major second", "Minor third", "Major third","Perfect fourth","Augmented fourth","Perfect Fifth","Minor sixth","Major sixth","Minor seventh","Major seventh","Perfect octave"," "," "," "," "," "," "," "," "," "," "," "," "]
 
 def read_music_constants():
     global music_constants,log_base_music
@@ -537,7 +538,7 @@ def update_zoom():
 
 def update_display():
     global mpos, mouse_radial, viewPos, zooming_complete, mouse_ang_width, mode_state
-    global window, input_boxes
+    global window, input_boxes, music_notes, music_intervals
 
     slice=1
     hght=0.2
@@ -669,6 +670,11 @@ def update_display():
                 note=note/220 #Normalise to A
                 angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor
                 drawTextRadial(13.2,angle_deg,music_note[note_index],0.0015,yellow)
+                if(octave==-1):
+                    drawTextRadial(13.8,angle_deg,music_intervals[note_index],0.0015,yellow)
+                if(octave==0):
+                    drawTextRadial(13.8,angle_deg,music_intervals[note_index+12],0.0015,yellow)
+
                 draw_radial(13.0,13.1,hght-0.6,slice,wd,angle_deg,yellow,0.1)
                 drawTextRadial(6.8,angle_deg-rotation/5,music_note[note_index],0.0015,yellow)
                 draw_radial(6.7,6.79,hght-0.6,slice,wd,angle_deg-rotation/5,yellow,0.1)

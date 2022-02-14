@@ -681,30 +681,40 @@ def update_display():
                 draw_radial(6.7,6.79,hght-0.6,slice,wd,angle_deg-rotation/5,yellow,0.1)
                 note_index+=1
 
-        note_num=-2
-        note_num2_persist=14 #black
-        note_num3_persist=14 #black
-        note_num4_persist=14 #black
+        note_num=0
+        note_num2_persist=6 #black
+        note_num3_persist=3 #black
+        note_num4_persist=0 #black
         for octave in range(-1,10):
-            for note in [1.0,1.0535,1.1250,1.1852,1.2656,1.3333,1.4142,1.5000,1.5803,1.6875,1.7778,1.8984]:
+           for note in [1.0,1.0535,1.1250,1.1852,1.2656,1.3333,1.4142,1.5000,1.5803,1.6875,1.7778,1.8984]:
                 angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor-0.2
-                angle_deg_triplet=angle_deg-0.7
+                angle_deg_triplet=angle_deg
                 note_num1=note_num%12
-                note_num5=note_num-13
-                note_num2=note_num5%3
-                #Triplet
-                if (note_num2==0):
-                    note_num2_persist=note_num1
-                #Triplet of triplets
-                note_num3=note_num5%9
-                if (note_num3==0):
-                    note_num3_persist=note_num1
-                #Triplet of triplet of triplets
-                note_num4=note_num5%27
-                if (note_num4==0):
-                    note_num4_persist=note_num1
                 if (octave>=0):
                     draw_radial(6,6.65,hght-0.6,slice,wd,angle_deg-rotation/5,music_colours[note_num1],1)
+
+
+      
+                note_num5=note_num
+                note_num2=note_num5%4
+                #Triplet
+                if (note_num2==0):
+                    note_num2_persist+=3
+                    if(note_num2_persist>=9):
+                       note_num2_persist=0
+                #Triplet of triplets
+                note_num3=note_num5%12
+                if (note_num3==0):
+                    note_num3_persist+=3
+                    if(note_num3_persist>=9):
+                       note_num3_persist=0
+                #Triplet of triplet of triplets
+                note_num4=(note_num5-12)%36
+                if (note_num4==0 and octave>0):
+                    note_num4_persist+=3
+                    if(note_num4_persist>=9):
+                       note_num4_persist=0
+                if (octave>=0):
                     draw_radial(5,6,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num2_persist],2.7)
                     draw_radial(4,5,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num3_persist],2.7)
                     draw_radial(3,4,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num4_persist],2.7)

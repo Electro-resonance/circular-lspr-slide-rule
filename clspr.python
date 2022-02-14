@@ -25,6 +25,7 @@
 # Circle examples: https://stackoverflow.com/questions/25423268/i-have-created-a-circle-from-lines-in-opengl-but-it-shows-holes-at-outer-edges
 # Mouse with OpenGL: https://stackoverflow.com/questions/46801701/how-to-find-pygame-window-coordinates-of-an-opengl-vertice
 # TextInput: https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
+# Music Notes: https://pages.mtu.edu/~suits/notefreqs.html
 
 # =============================================================================
 # Imports
@@ -588,9 +589,9 @@ def update_display():
     while (measure_angle1<-360):
        measure_angle2+=360
     if(mode_state==3):
-        if(measure_angle1<0):
+        if(measure_angle1<-45):
             measure_angle1+=360
-        if(measure_angle2<0):
+        if(measure_angle2<-45):
             measure_angle2+=360
         cursor1=round(math.exp(measure_angle1*factor*log_base_music),3)
         cursor2=round(math.exp(measure_angle2*factor*log_base_music),3)

@@ -26,6 +26,7 @@
 # Mouse with OpenGL: https://stackoverflow.com/questions/46801701/how-to-find-pygame-window-coordinates-of-an-opengl-vertice
 # TextInput: https://stackoverflow.com/questions/46390231/how-can-i-create-a-text-input-box-with-pygame
 # Music Notes: https://pages.mtu.edu/~suits/notefreqs.html
+# Indian tuning: http://www.dharambir.com/indian-classical-music-research/svara-and-tunings/
 
 # =============================================================================
 # Imports
@@ -268,8 +269,8 @@ music_note=["F","F#","G","G#","A","A#","B","C","C#","D","D#","E"]
 music_pitch=[349.23,369.99,392,415.3,440,466.16,493.88,523.25,554.37,587.33,622.25,659.25]
 music_intervals=[" "," "," "," "," "," "," ","Perfect unison","Minor second","Major second", "Minor third", "Major third","Perfect fourth","Augmented fourth","Perfect Fifth","Minor sixth","Major sixth","Minor seventh","Major seventh","Perfect octave"," "," "," "," "," "," "," "," "," "," "," "," "]
 
-svara_note=["ma","pa","dha","ni","sa","ri","ga"]
-svara_pitch=[341.333,384,426.667,480,512,576,640]
+svara_note=["ma","Ma","Pa","Dha","ni","Ni","Sa","Re","ga","Ga"]
+svara_pitch=[341.3,360,379.3,426.7,455.1,480,512,568.889,606.81481,640]
 
 def read_music_constants():
     global music_constants,log_base_music

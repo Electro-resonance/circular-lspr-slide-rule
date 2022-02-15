@@ -599,14 +599,14 @@ def update_display():
             measure_angle2+=360
         cursor1=round(math.exp(measure_angle1*factor*log_base_music),3)
         cursor2=round(math.exp(measure_angle2*factor*log_base_music),3)
-        drawText(950,780,"Cursor A: " +str(cursor1),14)
-        drawText(950,760,"Cursor B: " +str(cursor2),14)
-        drawText(960,740,"A: " +str(round(cursor1*256,2))+"Hz",14)
-        drawText(960,720,"B: " +str(round(cursor2*256,2))+"Hz",14)
-        drawText(960,700,"A: " +str(round(cursor1*261.63,2))+"Hz",14)
-        drawText(960,680,"B: " +str(round(cursor2*261.63,2))+"Hz",14)
-        drawText(960,660,"A: " +str(round(cursor1*264,2))+"Hz",14)
-        drawText(960,640,"B: " +str(round(cursor2*264,2))+"Hz",14)
+        drawText(950,780,"Cursor A: " +str(cursor1)+"º",14)
+        drawText(950,760,"Cursor B: " +str(cursor2)+"º",14)
+        drawText(980,730,"A: " +str(round(cursor1*256,2))+"Hz",14)
+        drawText(980,710,"A: " +str(round(cursor1*261.63,2))+"Hz",14)
+        drawText(980,690,"A: " +str(round(cursor1*264,2))+"Hz",14)
+        drawText(980,660,"B: " +str(round(cursor2*256,2))+"Hz",14)
+        drawText(980,640,"B: " +str(round(cursor2*261.63,2))+"Hz",14)
+        drawText(980,620,"B: " +str(round(cursor2*264,2))+"Hz",14)
     elif(log_mode==True or ln_mode==True):
         if(log_mode==True):
             if(measure_angle1>=0):

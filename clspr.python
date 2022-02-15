@@ -597,14 +597,14 @@ def update_display():
             measure_angle1+=360
         if(measure_angle2<-45):
             measure_angle2+=360
-        cursor1=round(math.exp(measure_angle1*factor*log_base_music),3)
-        cursor2=round(math.exp(measure_angle2*factor*log_base_music),3)
-        drawText(950,780,"Cursor A: " +str(cursor1)+"º",14)
-        drawText(950,760,"Cursor B: " +str(cursor2)+"º",14)
-        drawText(980,730,"A: " +str(round(cursor1*256,2))+"Hz",14)
+        cursor1=math.exp(measure_angle1*factor*log_base_music)
+        cursor2=math.exp(measure_angle2*factor*log_base_music)
+        drawText(950,780,"Cursor A: " +str(round(cursor1,3))+"º",14)
+        drawText(950,760,"Cursor B: " +str(round(cursor2,3))+"º",14)
+        drawText(980,730,"A: " +str(round(cursor1*256.6,2))+"Hz",14)
         drawText(980,710,"A: " +str(round(cursor1*261.63,2))+"Hz",14)
         drawText(980,690,"A: " +str(round(cursor1*264,2))+"Hz",14)
-        drawText(980,660,"B: " +str(round(cursor2*256,2))+"Hz",14)
+        drawText(980,660,"B: " +str(round(cursor2*256.6,2))+"Hz",14)
         drawText(980,640,"B: " +str(round(cursor2*261.63,2))+"Hz",14)
         drawText(980,620,"B: " +str(round(cursor2*264,2))+"Hz",14)
     elif(log_mode==True or ln_mode==True):
@@ -757,7 +757,7 @@ def update_display():
                  draw_text=True
            
            #Draw the text on the left hand side for the constants
-           if (draw_text==True and detail_offset<800):
+           if (draw_text==True and detail_offset<700 and mode_state!=3):
               drawText(20,detail_offset,value+ " " + units,20)
               if (symbol in const_name): 
                   symbol_disp="" 

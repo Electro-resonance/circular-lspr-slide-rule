@@ -5,16 +5,21 @@
 # Created Date: Thursday 3rd February 2022
 # Project: https://github.com/Electro-resonance/circular-lspr-slide-rule
 # Description: Circular Lograithmic Slide Rule for Physical Constants
-# Extended to angular displays for geometric exploration using 
+# Extended to angular displays for geometric exploration using
 # 2 ATAN(Ln(_)/19 SQRT(2))
 # =============================================================================
 
 # =============================================================================
 # Package requirements:
 # =============================================================================
-#python3.7
-#sudo easy_install-3.7 pygame
-#sudo easy_install-3.7 pyopengl
+# python3.7
+# sudo easy_install-3.7 pygame
+# sudo easy_install-3.7 pyopengl
+
+# Tested on Windows 11 with python 3.10 using:
+# (adapted by removing dependency on glut which for windows required a dll)
+# pip.exe install pygame
+# pip.exe install pyopengl
 
 # =============================================================================
 # Useful Links
@@ -40,43 +45,42 @@ import math
 import sys
 import csv
 
-
 # =============================================================================
 # Global variables
 # =============================================================================
-position_debug=False
+position_debug = False
 
-demo_mode=False
-log_mode=False
-ln_mode=False
-factor=19*math.sqrt(2)
-ln_constants=[]
-fundamental_constants=[]
-constants=[]
-music_constants=[]
+demo_mode = False
+log_mode = False
+ln_mode = False
+factor = 19 * math.sqrt(2)
+ln_constants = []
+fundamental_constants = []
+constants = []
+music_constants = []
 
-math_e=math.exp(1)
-math_phi=(1+math.sqrt(5))/2
-pi=math.pi
+math_e = math.exp(1)
+math_phi = (1 + math.sqrt(5)) / 2
+pi = math.pi
 
-draw_help=False
-after_help_zoom=-55
-help_zoom=-30
-default_zoom=help_zoom
+draw_help = False
+after_help_zoom = -55
+help_zoom = -30
+default_zoom = help_zoom
 
-zooming=True
-zooming_complete=False
-zoom_distance=default_zoom
+zooming = True
+zooming_complete = False
+zoom_distance = default_zoom
 
-mpos = [0,0]
-viewPos = [0,0]
-mouse_radial = [0,0]
-mouse_hold_pos = [0,0]
-mouse_button = [0,0,0]
-prev_mouse_button =[0,0,0]
+mpos = [0, 0]
+viewPos = [0, 0]
+mouse_radial = [0, 0]
+mouse_hold_pos = [0, 0]
+mouse_button = [0, 0, 0]
+prev_mouse_button = [0, 0, 0]
 
-zoom_pos=[0,0,-100]
-zoom_set=[0,0,default_zoom]
+zoom_pos = [0, 0, -100]
+zoom_set = [0, 0, default_zoom]
 
 rotation = 0.0
 
@@ -84,88 +88,92 @@ cursor_angle = 0.0
 cursor_stepi = 0.1
 cursor_ang_width = 10
 
-yellow=[1,1,0]
-white=[1,1,1]
-red=[0.75,0,0]
-red2=[0.6,0,0]
+yellow = [1, 1, 0]
+white = [1, 1, 1]
+red = [0.75, 0, 0]
+red2 = [0.6, 0, 0]
 
-help_state=0
-help_scaling=0
+help_state = 0
+help_scaling = 0
 
-mouse_ang_width=0.6
+mouse_ang_width = 0.6
 
-mode_state=0
-mode_change=0
+mode_state = 0
+mode_change = 0
+
 
 # =============================================================================
-# CSV Reader Function                                 
-# ============================================================================= 
+# CSV Reader Function
+# =============================================================================
 
 def read_csv():
-  global fundamental_constants
-  constants=[]
-  with open('constants.csv', 'r', newline='',encoding='utf16') as csvfile:
-     reader = csv.DictReader(csvfile)
+    global fundamental_constants
+    constants = []
+    with open('constants.csv', 'r', newline='', encoding='utf16') as csvfile:
+        reader = csv.DictReader(csvfile)
 
-     #Read lines from the csv file
-     for row in reader:
-        const_name=row['description']
-        log_const=float(row['log'])
-        symbol=row['symbol'].strip()
-        geo=row['geometry']
-        print(const_name,log_const,geo,symbol,len(symbol))
+        # Read lines from the csv file
+        for row in reader:
+            const_name = row['description']
+            log_const = float(row['log'])
+            symbol = row['symbol'].strip()
+            geo = row['geometry']
+            print(const_name, log_const, geo, symbol, len(symbol))
 
-        if geo and geo.isdigit():
-           geometry=float(row['geometry'])
-        else:
-           geometry=0
+            if geo and geo.isdigit():
+                geometry = float(row['geometry'])
+            else:
+                geometry = 0
 
-        if (log_mode==False and ln_mode==False):
-            angle=2 * math.atan(log_const/factor)
-            angle_deg=angle/math.pi*180
-        else:
-            angle_deg=log_const/factor
-            if(const_name.find("+/- Infinity")!=-1):
-                angle_deg=180
+            if (log_mode == False and ln_mode == False):
+                angle = 2 * math.atan(log_const / factor)
+                angle_deg = angle / math.pi * 180
+            else:
+                angle_deg = log_const / factor
+                if (const_name.find("+/- Infinity") != -1):
+                    angle_deg = 180
 
-        #Colours based on angle of the constants
-        const_colour=[0.2,0.2,0.2]
-        if (int((angle_deg+0.001)/72)):
-           const_colour[2]=0.1
-        else:
-           const_colour[2]=0.0
-        if (int((angle_deg+0.001)/90)):
-           const_colour[0]=0.5
-        else:
-           const_colour[0]=0
+            # Colours based on angle of the constants
+            const_colour = [0.2, 0.2, 0.2]
+            if (int((angle_deg + 0.001) / 72)):
+                const_colour[2] = 0.1
+            else:
+                const_colour[2] = 0.0
+            if (int((angle_deg + 0.001) / 90)):
+                const_colour[0] = 0.5
+            else:
+                const_colour[0] = 0
 
-        #Find some keywords and add colours related to the constant type
-        if (const_name.find("eed")!=-1):#"Speed"
-           const_colour=[1,1,1]
-        if (const_name.find("Electric")!=-1):
-           const_colour=[1,0,1]
-        if (const_name.find("Gravit")!=-1):
-           const_colour=[0,1,1]
-        if (const_name.find("Period")!=-1 or const_name.find("Frequency")!=-1 or int(angle_deg*10)==0):
-           const_colour=[1,1,0]
-        if (geometry>0):
-           const_colour=[0.4,0.4,0.4]
+            # Find some keywords and add colours related to the constant type
+            if (const_name.find("eed") != -1):  # "Speed"
+                const_colour = [1, 1, 1]
+            if (const_name.find("Electric") != -1):
+                const_colour = [1, 0, 1]
+            if (const_name.find("Gravit") != -1):
+                const_colour = [0, 1, 1]
+            if (const_name.find("Period") != -1 or const_name.find("Frequency") != -1 or int(angle_deg * 10) == 0):
+                const_colour = [1, 1, 0]
+            if (geometry > 0):
+                const_colour = [0.4, 0.4, 0.4]
 
-        source=row['source']
-        value=row['value']
-        uncertainty=row['uncertainty']
-        units=row['unit']
-        category=row['category']
-        subcategory=row['subcategory']
+            source = row['source']
+            value = row['value']
+            uncertainty = row['uncertainty']
+            units = row['unit']
+            category = row['category']
+            subcategory = row['subcategory']
 
-        gradule=0
+            gradule = 0
 
-        #Create a list of constants
-        const=(const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
-        fundamental_constants.append(const)
+            # Create a list of constants
+            const = (
+            const_name, log_const, angle_deg, const_colour, geometry, symbol, source, value, uncertainty, units,
+            category, subcategory, gradule)
+            fundamental_constants.append(const)
 
-        read_log_constants()
-        read_music_constants()
+            read_log_constants()
+            read_music_constants()
+
 
 # =============================================================================
 # Text Input
@@ -173,6 +181,7 @@ def read_csv():
 
 COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
+
 
 class InputBox:
 
@@ -207,14 +216,15 @@ class InputBox:
 
     def update(self):
         # Resize the box if the text is too long.
-        width = max(200, self.txt_surface.get_width()+10)
+        width = max(200, self.txt_surface.get_width() + 10)
         self.rect.w = width
 
     def draw(self, screen):
         # Blit the text.
-        screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
+        screen.blit(self.txt_surface, (self.rect.x + 5, self.rect.y + 5))
         # Blit the rect.
         pygame.draw.rect(screen, self.color, self.rect, 2)
+
 
 # =============================================================================
 # Natural Logarithm Scale
@@ -222,111 +232,127 @@ class InputBox:
 
 def read_log_constants():
     global ln_constants
-    factor=0.1
-    ln_constants=[]
-    for exp in range(-7,7):
-        for dec in range(1,10):
-            if (dec!=0 or exp==0):
-                fvalue=dec*10**exp
-                name=str(dec)+"E"+str(exp)
-                #print(name+"="+str(fvalue))
-                if(fvalue==0):
-                    log_const=1
-                elif (fvalue>0):
-                    log_const=math.log(fvalue)
+    factor = 0.1
+    ln_constants = []
+    for exp in range(-7, 7):
+        for dec in range(1, 10):
+            if (dec != 0 or exp == 0):
+                fvalue = dec * 10 ** exp
+                name = str(dec) + "E" + str(exp)
+                # print(name+"="+str(fvalue))
+                if (fvalue == 0):
+                    log_const = 1
+                elif (fvalue > 0):
+                    log_const = math.log(fvalue)
                 else:
-                    log_const=-1* math.log(-fvalue)
-                angle_deg=log_const/factor
-                const_colour=[1,1,1]
-                geometry=0
-                fs="{:."+str(abs(exp))+"f}"
-                value=fs.format(dec)
-                symbol=fs.format(fvalue)
-                source="natural log"
-                uncertainty=0
-                units=" "
-                gradule=0
-                if (dec==1):
-                    gradule=0
-                elif (dec==5):
-                    gradule=0.3
+                    log_const = -1 * math.log(-fvalue)
+                angle_deg = log_const / factor
+                const_colour = [1, 1, 1]
+                geometry = 0
+                fs = "{:." + str(abs(exp)) + "f}"
+                value = fs.format(dec)
+                symbol = fs.format(fvalue)
+                source = "natural log"
+                uncertainty = 0
+                units = " "
+                gradule = 0
+                if (dec == 1):
+                    gradule = 0
+                elif (dec == 5):
+                    gradule = 0.3
                 else:
-                    gradule=0.6
-                category=" "
-                subcategory=" "
+                    gradule = 0.6
+                category = " "
+                subcategory = " "
 
-                const=(name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
+                const = (
+                name, log_const, angle_deg, const_colour, geometry, symbol, source, value, uncertainty, units, category,
+                subcategory, gradule)
                 ln_constants.append(const)
-       
+
+
 # =============================================================================
 # Music
 # =============================================================================
-log_base_music=math.log(12)
+log_base_music = math.log(12)
 
-music_colours =[[40/255,255/255,0],[0,255/255,232/255],[0,124/255,255/255],[5/255,0,255/255],[69/255,0,234/255],[87/255,0,158/255],[116/255,0,0],[179/255,0,0],[238/255,0,0],[255/255,99/255,0],[255/255,236/255,0],[153/255,255/255,0],[153/255,255/255,0],[153/255,255/255,0],[40/255,255/255,0],[0,0,0]]
+music_colours = [[40 / 255, 255 / 255, 0], [0, 255 / 255, 232 / 255], [0, 124 / 255, 255 / 255],
+                 [5 / 255, 0, 255 / 255], [69 / 255, 0, 234 / 255], [87 / 255, 0, 158 / 255], [116 / 255, 0, 0],
+                 [179 / 255, 0, 0], [238 / 255, 0, 0], [255 / 255, 99 / 255, 0], [255 / 255, 236 / 255, 0],
+                 [153 / 255, 255 / 255, 0], [153 / 255, 255 / 255, 0], [153 / 255, 255 / 255, 0],
+                 [40 / 255, 255 / 255, 0], [0, 0, 0]]
 
-music_note=["F","F#","G","G#","A","A#","B","C","C#","D","D#","E"]
-music_pitch=[349.23,369.99,392,415.3,440,466.16,493.88,523.25,554.37,587.33,622.25,659.25]
-music_intervals=[" "," "," "," "," "," "," ","Perfect unison","Minor second","Major second", "Minor third", "Major third","Perfect fourth","Augmented fourth","Perfect Fifth","Minor sixth","Major sixth","Minor seventh","Major seventh","Perfect octave"," "," "," "," "," "," "," "," "," "," "," "," "]
+music_note = ["F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"]
+music_pitch = [349.23, 369.99, 392, 415.3, 440, 466.16, 493.88, 523.25, 554.37, 587.33, 622.25, 659.25]
+music_intervals = [" ", " ", " ", " ", " ", " ", " ", "Perfect unison", "Minor second", "Major second", "Minor third",
+                   "Major third", "Perfect fourth", "Augmented fourth", "Perfect Fifth", "Minor sixth", "Major sixth",
+                   "Minor seventh", "Major seventh", "Perfect octave", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ",
+                   " ", " "]
 
-svara_note=["ma","Ma","Pa","Dha","ni","Ni","Sa","Re","ga","Ga"]
-svara_pitch=[341.3,360,379.3,426.7,455.1,480,512,568.889,606.81481,640]
+svara_note = ["ma", "Ma", "Pa", "Dha", "ni", "Ni", "Sa", "Re", "ga", "Ga"]
+svara_pitch = [341.3, 360, 379.3, 426.7, 455.1, 480, 512, 568.889, 606.81481, 640]
+
 
 def read_music_constants():
-    global music_constants,log_base_music
-    factor=1
-    music_constants=[]
-    for exp in range(0,10):
-        for dec in range(0,12):
-            fvalue=(1+dec/12)*(2**exp)
-            name=str(dec)+"E"+str(exp)
-            #print(name+"="+str(fvalue))
-            if(fvalue==0):
-                log_const=1
-            elif (fvalue>0):
-                log_const=math.log(fvalue)/log_base_music
+    global music_constants, log_base_music
+    factor = 1
+    music_constants = []
+    for exp in range(0, 10):
+        for dec in range(0, 12):
+            fvalue = (1 + dec / 12) * (2 ** exp)
+            name = str(dec) + "E" + str(exp)
+            # print(name+"="+str(fvalue))
+            if (fvalue == 0):
+                log_const = 1
+            elif (fvalue > 0):
+                log_const = math.log(fvalue) / log_base_music
             else:
-                log_const=-1* math.log(-fvalue)/log_base_music
-            angle_deg=log_const/factor
-            const_colour=[1,1,1]
-            geometry=0
-            fs="{:.5f}"
-            value=fs.format(dec)
-            symbol=fs.format(fvalue)
-            source="base 12 log"
-            uncertainty=0
-            units=" "
-            gradule=0
-            if (dec==0):
-                gradule=0.3
-            elif (dec==5 or dec==7): #Diminished Fifth or Augmented Fifth
-                gradule=0.5
-            elif (dec==6):#Perfect Fifth
-                gradule=0.35
+                log_const = -1 * math.log(-fvalue) / log_base_music
+            angle_deg = log_const / factor
+            const_colour = [1, 1, 1]
+            geometry = 0
+            fs = "{:.5f}"
+            value = fs.format(dec)
+            symbol = fs.format(fvalue)
+            source = "base 12 log"
+            uncertainty = 0
+            units = " "
+            gradule = 0
+            if (dec == 0):
+                gradule = 0.3
+            elif (dec == 5 or dec == 7):  # Diminished Fifth or Augmented Fifth
+                gradule = 0.5
+            elif (dec == 6):  # Perfect Fifth
+                gradule = 0.35
             else:
-                gradule=0.7
-            category=" "
-            subcategory=" "
+                gradule = 0.7
+            category = " "
+            subcategory = " "
 
-            const=(name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
+            const = (
+            name, log_const, angle_deg, const_colour, geometry, symbol, source, value, uncertainty, units, category,
+            subcategory, gradule)
             music_constants.append(const)
+
 
 # =============================================================================
 # Misc Functions
 # =============================================================================
 
-def angle_difference(a,b):
-   while b<-180:
-      b+=360
-   return min(360 - abs(a - b), abs(a - b))
+def angle_difference(a, b):
+    while b < -180:
+        b += 360
+    return min(360 - abs(a - b), abs(a - b))
 
-def angle_movement(a,b):
-   while b<-180:
-      b+=360
-   diff=a-b
-   if abs(diff)>90:
-      diff=0
-   return diff
+
+def angle_movement(a, b):
+    while b < -180:
+        b += 360
+    diff = a - b
+    if abs(diff) > 90:
+        diff = 0
+    return diff
+
 
 # =============================================================================
 # Constant List Modification Function
@@ -334,24 +360,26 @@ def angle_movement(a,b):
 
 def adjust_factors():
     global factor
-    if (abs(factor)<1E-4):
-         factor=1E-4 #Prevent factors that result in divide by zero.
+    if (abs(factor) < 1E-4):
+        factor = 1E-4  # Prevent factors that result in divide by zero.
     for idx in range(len(constants)):
-        (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)= constants[idx]
-        if (log_mode==False and ln_mode==False):
-            angle=2 * math.atan(log_const/factor)
-            angle_deg=angle/math.pi*180
+        (const_name, log_const, angle_deg, const_colour, geometry, symbol, source, value, uncertainty, units, category,
+         subcategory, gradule) = constants[idx]
+        if (log_mode == False and ln_mode == False):
+            angle = 2 * math.atan(log_const / factor)
+            angle_deg = angle / math.pi * 180
         else:
-            angle_deg=log_const/factor
-            if(const_name.find("+/- Infinity")!=-1):
-                angle_deg=180
-        constants[idx]=(const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule)
+            angle_deg = log_const / factor
+            if (const_name.find("+/- Infinity") != -1):
+                angle_deg = 180
+        constants[idx] = (
+        const_name, log_const, angle_deg, const_colour, geometry, symbol, source, value, uncertainty, units, category,
+        subcategory, gradule)
 
- 
-# =============================================================================
-# 3D Text Printing Functions   
-# =============================================================================
 
+# =============================================================================
+# 3D Text Printing Functions
+# =============================================================================
 
 
 def drawText(x, y, text, pts):
@@ -360,76 +388,97 @@ def drawText(x, y, text, pts):
     textData = pygame.image.tostring(textSurface, "RGBA", True)
     glWindowPos2d(x, y)
     glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
- 
-def drawTextRadialHoriz(r,angle, text):
-    x = r * math.cos(angle/180*math.pi)
-    y = r * math.sin(angle/180*math.pi)
+
+
+def drawTextRadialHoriz(r, angle, text):
+    x = r * math.cos(angle / 180 * math.pi)
+    y = r * math.sin(angle / 180 * math.pi)
     textSurface = font.render(text, True, (255, 255, 66, 255)).convert_alpha()
     textData = pygame.image.tostring(textSurface, "RGBA", True)
-    glRasterPos(x,y)
+    glRasterPos(x, y)
     glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
+
 
 def drawTextRadialPts(x, y, text, pts):
     font = pygame.font.SysFont('arial', pts)
-    drawTextRadialHoriz(r,angle, text)
+    drawTextRadialHoriz(r, angle, text)
 
-def label(x, y, s, angle, dir, scale,colour):
-     glPushMatrix()
-     glColor(colour)
-     glTranslatef(x, y, 0.0)
-     glScalef(scale, scale, scale)
-     glRotatef(angle, 0, 0, 1);
-     for c in s:
-         glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(c))
-         width=glutStrokeWidth(GLUT_STROKE_ROMAN, ord(c))
-     glPopMatrix()
+
+
+def label(x, y, s, angle, dir, scale, colour):
+    global zooming
+    #Only print after zooming stops to speed up zoom
+    if not zooming:
+        glPushMatrix()
+        glColor(colour)
+        glTranslatef(x, y, 0.0)
+        glScalef(scale, scale, scale)
+        glRotatef(angle, 0, 0, 1)
+        if bool(glutStrokeCharacter):
+            # Plot using glut when available
+            for c in s:
+                glutStrokeCharacter(GLUT_STROKE_ROMAN, ord(c))
+                width = glutStrokeWidth(GLUT_STROKE_ROMAN, ord(c))
+        else:
+            # Plot without using glut
+            pts=8
+            font = pygame.font.SysFont('arial', pts)
+            drawTextRadialHoriz(1, angle, s)
+            glPopMatrix()
 
 def label_length(s):
-     str_len=0
-     for c in s:
-        str_len+=glutStrokeWidth(GLUT_STROKE_ROMAN, ord(c))
-     return str_len
+    if bool(glutStrokeWidth):
+        str_len = 0
+        for c in s:
+            str_len += glutStrokeWidth(GLUT_STROKE_ROMAN, ord(c))
+        return str_len
+    else:
+        # Fallback to alternative method (using pygame)
+        font = pygame.font.Font(None, 8)  # Choose your font and size here
+        text = font.render(s, True, (255, 255, 255))  # Render the text
+        return text.get_width()
 
-def drawTextRadial(r,angle, text,scale,colour):
-    text_angle=angle
-    while (text_angle>180):
-        text_angle-=360
-    while (text_angle<-180):
-        text_angle+=360
-    dir=0
-    if (text_angle>90 or text_angle<-90):
-         text_angle+=180
-         dir=1
-         len=label_length(text)
-         r+=len*scale
-    x = r * math.cos(angle/180*math.pi)
-    y = r * math.sin(angle/180*math.pi)
-    label(x, y, text, text_angle, dir, scale,colour)
+
+def drawTextRadial(r, angle, text, scale, colour):
+    text_angle = angle
+    while (text_angle > 180):
+        text_angle -= 360
+    while (text_angle < -180):
+        text_angle += 360
+    dir = 0
+    if (text_angle > 90 or text_angle < -90):
+        text_angle += 180
+        dir = 1
+        len = label_length(text)
+        r += len * scale
+    x = r * math.cos(angle / 180 * math.pi)
+    y = r * math.sin(angle / 180 * math.pi)
+    label(x, y, text, text_angle, dir, scale, colour)
 
 
 # =============================================================================
-# 3D Drawing Functions  
+# 3D Drawing Functions
 # =============================================================================
 
-def draw_radial(r1,r2, h, num_slices,width,offset,colour,ang_width):
+def draw_radial(r1, r2, h, num_slices, width, offset, colour, ang_width):
     n = float(num_slices)
 
-    z = -h/2.0
-    angle = offset/180*math.pi
-    width1=ang_width/180*math.pi
-    #angle-=width1 /2 #centre the angle  y offsetting the rectangle
+    z = -h / 2.0
+    angle = offset / 180 * math.pi
+    width1 = ang_width / 180 * math.pi
+    # angle-=width1 /2 #centre the angle  y offsetting the rectangle
     for i in range(int(n)):
-        angle = 2 * math.pi * (i/n)/width + offset/180*math.pi
+        angle = 2 * math.pi * (i / n) / width + offset / 180 * math.pi
         x1 = r1 * math.cos(angle + width1)
         y1 = r1 * math.sin(angle + width1)
         x2 = r1 * math.cos(angle)
         y2 = r1 * math.sin(angle)
         x3 = r2 * math.cos(angle)
         y3 = r2 * math.sin(angle)
-        x4 = r2 * math.cos(angle + width1) 
+        x4 = r2 * math.cos(angle + width1)
         y4 = r2 * math.sin(angle + width1)
 
-        glBegin(GL_QUADS)#draw a quadrangle for the radial arm
+        glBegin(GL_QUADS)  # draw a quadrangle for the radial arm
         glColor(colour)
         glVertex(x1, y1, z)
         glVertex(x2, y2, z)
@@ -438,14 +487,15 @@ def draw_radial(r1,r2, h, num_slices,width,offset,colour,ang_width):
         glVertex(x1, y1, z)
         glEnd()
 
-def draw_circle(r1,r2, h, num_slices,width,offset,colour):
+
+def draw_circle(r1, r2, h, num_slices, width, offset, colour):
     n = float(num_slices)
 
-    glBegin(GL_TRIANGLE_FAN)#draw the circle
+    glBegin(GL_TRIANGLE_FAN)  # draw the circle
     glColor(colour)
-    z = -h/2.0
+    z = -h / 2.0
     for i in range(int(n) + 1):
-        angle = 2 * math.pi * (i/n)
+        angle = 2 * math.pi * (i / n)
         x1 = r1 * math.cos(angle)
         y1 = r1 * math.sin(angle)
         x2 = r2 * math.cos(angle)
@@ -459,98 +509,99 @@ def draw_circle(r1,r2, h, num_slices,width,offset,colour):
 # =============================================================================
 
 def check_mouse():
-    global mpos, viewPos , mouse_radial, mouse_button, rotation, mouse_hold_pos, rotate, zoom_distance
+    global mpos, viewPos, mouse_radial, mouse_button, rotation, mouse_hold_pos, rotate, zoom_distance
     global prev_mouse_button, cursor_angle, cursor_ang_width
-    changed=False
+    changed = False
     newpos = pygame.mouse.get_pos()
-    if (newpos[0]!=mpos[0] or newpos[1]!=mpos[1]):
-       mpos=newpos
-       #Scaling factor for mouse focus at a distance
-       if(zoom_pos[0]==0 and zoom_pos[1]==0):
-           z = 28 
-       else:
-           z = 31
-       ndc = [ 2.0 * mpos[0]/width - 1.0, 1.0 - 2.0 * mpos[1]/height ]
-       tanFov = math.tan( zoom_distance * 0.5 * math.pi / 180 )
-       aspect = width / height
-       viewPos = [z * ndc[0] * aspect * tanFov + zoom_set[0] , z * ndc[1] * tanFov +zoom_set[1]]
-       mouse_ang=180*math.atan2(viewPos[0],-viewPos[1])/math.pi+90
-       if (mouse_ang>180):
-           mouse_ang=mouse_ang-360
-       mouse_radial = [ math.sqrt(viewPos[0]*viewPos[0]+viewPos[1]*viewPos[1]) , mouse_ang ]
-       changed=True
-    
-    mouse_button = pygame.mouse.get_pressed()
-    #Ignore the initial mouse press
-    if (mouse_button[0]==True and prev_mouse_button[0]==True):
+    if (newpos[0] != mpos[0] or newpos[1] != mpos[1]):
+        mpos = newpos
+        # Scaling factor for mouse focus at a distance
+        if (zoom_pos[0] == 0 and zoom_pos[1] == 0):
+            z = 28
+        else:
+            z = 31
+        ndc = [2.0 * mpos[0] / width - 1.0, 1.0 - 2.0 * mpos[1] / height]
+        tanFov = math.tan(zoom_distance * 0.5 * math.pi / 180)
+        aspect = width / height
+        viewPos = [z * ndc[0] * aspect * tanFov + zoom_set[0], z * ndc[1] * tanFov + zoom_set[1]]
+        mouse_ang = 180 * math.atan2(viewPos[0], -viewPos[1]) / math.pi + 90
+        if (mouse_ang > 180):
+            mouse_ang = mouse_ang - 360
+        mouse_radial = [math.sqrt(viewPos[0] * viewPos[0] + viewPos[1] * viewPos[1]), mouse_ang]
+        changed = True
 
-       #Detect mouse over cursor
-       if(mouse_radial[0]>=5 and mouse_radial[0]<7) or (mouse_radial[0]>10.5 and mouse_radial[0]<30):
-            cursor_diff=angle_difference(mouse_radial[1],cursor_angle)
-            if(cursor_diff<cursor_ang_width):
-                cursor_angle=mouse_radial[1]
-       else:
-           #Mouse over inner wheel
-           rotation-=angle_movement(mouse_radial[1],mouse_hold_pos[1])*5
-       mouse_hold_pos=mouse_radial
-       rotate=0
-       changed=True
+    mouse_button = pygame.mouse.get_pressed()
+    # Ignore the initial mouse press
+    if (mouse_button[0] == True and prev_mouse_button[0] == True):
+
+        # Detect mouse over cursor
+        if (mouse_radial[0] >= 5 and mouse_radial[0] < 7) or (mouse_radial[0] > 10.5 and mouse_radial[0] < 30):
+            cursor_diff = angle_difference(mouse_radial[1], cursor_angle)
+            if (cursor_diff < cursor_ang_width):
+                cursor_angle = mouse_radial[1]
+        else:
+            # Mouse over inner wheel
+            rotation -= angle_movement(mouse_radial[1], mouse_hold_pos[1]) * 5
+        mouse_hold_pos = mouse_radial
+        rotate = 0
+        changed = True
     else:
-       mouse_hold_pos=mouse_radial
-    if (mouse_button[2]==True):
-       zoom_distance=zoom_distance+angle_movement(mouse_radial[1],mouse_hold_pos[1])/2
-       if(zoom_distance>-8):
-          zoom_distance=-8
-       elif (zoom_distance<-99):
-          zoom_distance=-99
-       mouse_hold_pos=mouse_radial
-       changed=True
-    prev_mouse_button=mouse_button
+        mouse_hold_pos = mouse_radial
+    if (mouse_button[2] == True):
+        zoom_distance = zoom_distance + angle_movement(mouse_radial[1], mouse_hold_pos[1]) / 2
+        if (zoom_distance > -8):
+            zoom_distance = -8
+        elif (zoom_distance < -99):
+            zoom_distance = -99
+        mouse_hold_pos = mouse_radial
+        changed = True
+    prev_mouse_button = mouse_button
     return changed
+
 
 # =============================================================================
 # Update screen
 # =============================================================================
 
 def update_zoom():
-   global zoom_set , zoom_pos, zooming, mouse_radial, zooming_complete
-   if (zoom_location==-1000):
-        #move back far enough to see this object
-        zoom_set=[0,0,default_zoom]
-   else:
-        zoom_radius=10
-        zoom_angle=zoom_location
-        zoom_set = [zoom_radius * math.cos(zoom_angle/180*math.pi) , zoom_radius * math.sin(zoom_angle/180*math.pi) , zoom_distance]
+    global zoom_set, zoom_pos, zooming, mouse_radial, zooming_complete
+    if (zoom_location == -1000):
+        # move back far enough to see this object
+        zoom_set = [0, 0, default_zoom]
+    else:
+        zoom_radius = 10
+        zoom_angle = zoom_location
+        zoom_set = [zoom_radius * math.cos(zoom_angle / 180 * math.pi),
+                    zoom_radius * math.sin(zoom_angle / 180 * math.pi), zoom_distance]
 
-   zooming=False
-   dist=0
-   for dimension in range(3):
-        if (zoom_pos[dimension]!=zoom_set[dimension]):
-            zooming=True #Flag that we are still zooming
-        zoom_pos[dimension]=(7*zoom_pos[dimension]+zoom_set[dimension])/8 #Weighted rolling average§
-        dist+=abs(zoom_pos[dimension]-zoom_set[dimension]) #Add up amount of movement needed
+    zooming = False
+    dist = 0
+    for dimension in range(3):
+        if (zoom_pos[dimension] != zoom_set[dimension]):
+            zooming = True  # Flag that we are still zooming
+        zoom_pos[dimension] = (7 * zoom_pos[dimension] + zoom_set[dimension]) / 8  # Weighted rolling average§
+        dist += abs(zoom_pos[dimension] - zoom_set[dimension])  # Add up amount of movement needed
 
-   #Check if we are nearly at destination zoom position
-   if dist<0.01:
-       zoom_pos=zoom_set
-       zooming_complete=True
-   else:
-       zomming_complete=False
+    # Check if we are nearly at destination zoom position
+    if dist < 0.01:
+        zoom_pos = zoom_set
+        zooming_complete = True
+    else:
+        zomming_complete = False
 
-   glTranslate(zoom_pos[0], zoom_pos[1], zoom_pos[2])
-
+    glTranslate(zoom_pos[0], zoom_pos[1], zoom_pos[2])
 
 
 def update_display():
     global mpos, mouse_radial, viewPos, zooming_complete, mouse_ang_width, mode_state
     global window, input_boxes, music_notes, music_intervals
 
-    slice=1
-    hght=0.2
-    wd=800
-    overlap=0.05
-    detail_offset=150
-    last_angle=[0,0,0,0,0,0]
+    slice = 1
+    hght = 0.2
+    wd = 800
+    overlap = 0.05
+    detail_offset = 150
+    last_angle = [0, 0, 0, 0, 0, 0]
 
     glClear(GL_COLOR_BUFFER_BIT)
     glClear(GL_DEPTH_BUFFER_BIT)
@@ -558,326 +609,327 @@ def update_display():
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    gluPerspective(30, float(width)/height, 1, 100)
+    gluPerspective(30, float(width) / height, 1, 100)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
     update_zoom()
 
-    #TODO: This is the factor used for ATAN mode.
-    #Needs a more meaningful display
-    drawText(20,40,str(factor) ,14)
-    drawText(20,20,str(zoom_distance) ,14)
+    # TODO: This is the factor used for ATAN mode.
+    # Needs a more meaningful display
+    drawText(20, 40, str(factor), 14)
+    drawText(20, 20, str(zoom_distance), 14)
 
-    if (mode_state==0):
-        drawText(20,770,"Mode: LSPR" ,24)
-    elif(mode_state==1):
-        drawText(20,770,"Mode: ArcTan Natural Log" ,24)
-    elif(mode_state==2):
-        drawText(20,770,"Mode: Natural Log" ,24)
-    elif(mode_state==3):
-        drawText(20,770,"Mode: Log Base 12 (Music)" ,24)
+    if (mode_state == 0):
+        drawText(20, 770, "Mode: LSPR", 24)
+    elif (mode_state == 1):
+        drawText(20, 770, "Mode: ArcTan Natural Log", 24)
+    elif (mode_state == 2):
+        drawText(20, 770, "Mode: Natural Log", 24)
+    elif (mode_state == 3):
+        drawText(20, 770, "Mode: Log Base 12 (Music)", 24)
 
-    #Draw the cursor
-    draw_radial(3,14,0.205,1,wd,cursor_angle,red2,0.25)
-    draw_radial(3,13.9,0.199,1,wd,cursor_angle+0.075,red,0.1)
+    # Draw the cursor
+    draw_radial(3, 14, 0.205, 1, wd, cursor_angle, red2, 0.25)
+    draw_radial(3, 13.9, 0.199, 1, wd, cursor_angle + 0.075, red, 0.1)
 
-    #Cursor details
-    measure_angle1=cursor_angle
-    measure_angle2=cursor_angle+rotation/5
-    while (measure_angle1>180):
-       measure_angle1-=360
-    while (measure_angle2>180):
-       measure_angle2-=360
-    while (measure_angle1<-180):
-       measure_angle1+=360
-    while (measure_angle1<-360):
-       measure_angle2+=360
-    if(mode_state==3):
-        if(measure_angle1<-45):
-            measure_angle1+=360
-        if(measure_angle2<-45):
-            measure_angle2+=360
-        cursor1=math.exp(measure_angle1*factor*log_base_music)
-        cursor2=math.exp(measure_angle2*factor*log_base_music)
-        drawText(950,780,"Cursor A: " +str(round(cursor1,3))+"º",14)
-        drawText(950,760,"Cursor B: " +str(round(cursor2,3))+"º",14)
-        drawText(980,730,"A: " +str(round(cursor1*256.6,2))+"Hz",14)
-        drawText(980,710,"A: " +str(round(cursor1*261.63,2))+"Hz",14)
-        drawText(980,690,"A: " +str(round(cursor1*264,2))+"Hz",14)
-        drawText(980,660,"B: " +str(round(cursor2*256.6,2))+"Hz",14)
-        drawText(980,640,"B: " +str(round(cursor2*261.63,2))+"Hz",14)
-        drawText(980,620,"B: " +str(round(cursor2*264,2))+"Hz",14)
-    elif(log_mode==True or ln_mode==True):
-        if(log_mode==True):
-            if(measure_angle1>=0):
-                cursor1=math.exp(measure_angle1*factor)
+    # Cursor details
+    measure_angle1 = cursor_angle
+    measure_angle2 = cursor_angle + rotation / 5
+    while (measure_angle1 > 180):
+        measure_angle1 -= 360
+    while (measure_angle2 > 180):
+        measure_angle2 -= 360
+    while (measure_angle1 < -180):
+        measure_angle1 += 360
+    while (measure_angle1 < -360):
+        measure_angle2 += 360
+    if (mode_state == 3):
+        if (measure_angle1 < -45):
+            measure_angle1 += 360
+        if (measure_angle2 < -45):
+            measure_angle2 += 360
+        cursor1 = math.exp(measure_angle1 * factor * log_base_music)
+        cursor2 = math.exp(measure_angle2 * factor * log_base_music)
+        drawText(950, 780, "Cursor A: " + str(round(cursor1, 3)) + "º", 14)
+        drawText(950, 760, "Cursor B: " + str(round(cursor2, 3)) + "º", 14)
+        drawText(980, 730, "A: " + str(round(cursor1 * 256.6, 2)) + "Hz", 14)
+        drawText(980, 710, "A: " + str(round(cursor1 * 261.63, 2)) + "Hz", 14)
+        drawText(980, 690, "A: " + str(round(cursor1 * 264, 2)) + "Hz", 14)
+        drawText(980, 660, "B: " + str(round(cursor2 * 256.6, 2)) + "Hz", 14)
+        drawText(980, 640, "B: " + str(round(cursor2 * 261.63, 2)) + "Hz", 14)
+        drawText(980, 620, "B: " + str(round(cursor2 * 264, 2)) + "Hz", 14)
+    elif (log_mode == True or ln_mode == True):
+        if (log_mode == True):
+            if (measure_angle1 >= 0):
+                cursor1 = math.exp(measure_angle1 * factor)
             else:
-                cursor1=-math.exp(-measure_angle1*factor)
-            if(measure_angle2>=0):
-                cursor2=math.exp(measure_angle2*factor)
+                cursor1 = -math.exp(-measure_angle1 * factor)
+            if (measure_angle2 >= 0):
+                cursor2 = math.exp(measure_angle2 * factor)
             else:
-                cursor2=-math.exp(-measure_angle2*factor)
-        else: #ln_mode
-                cursor1=math.exp(measure_angle1*factor) 
-                cursor2=math.exp(measure_angle2*factor)
-        cursor1str="{:.2e}".format(cursor1)
-        cursor2str="{:.2e}".format(cursor2)
-        drawText(950,780,"Cursor A: " +cursor1str,14)
-        drawText(950,760,"Cursor B: " +cursor2str,14)
+                cursor2 = -math.exp(-measure_angle2 * factor)
+        else:  # ln_mode
+            cursor1 = math.exp(measure_angle1 * factor)
+            cursor2 = math.exp(measure_angle2 * factor)
+        cursor1str = "{:.2e}".format(cursor1)
+        cursor2str = "{:.2e}".format(cursor2)
+        drawText(950, 780, "Cursor A: " + cursor1str, 14)
+        drawText(950, 760, "Cursor B: " + cursor2str, 14)
     else:
-        cursor1=0
-        cursor2=0
-    
-
+        cursor1 = 0
+        cursor2 = 0
 
     if (position_debug):
-        drawText(920,70,str(round(mouse_radial[0],3)),14 )
-        drawText(920,90,str(round(mouse_radial[1],2)),14 )
-        drawText(920,110,str(mpos[0]),14 )
-        drawText(920,130,str(mpos[1]),14 )
-        drawText(920,150,str(viewPos[0]),14 )
-        drawText(920,170,str(viewPos[1]),14 )
+        drawText(920, 70, str(round(mouse_radial[0], 3)), 14)
+        drawText(920, 90, str(round(mouse_radial[1], 2)), 14)
+        drawText(920, 110, str(mpos[0]), 14)
+        drawText(920, 130, str(mpos[1]), 14)
+        drawText(920, 150, str(viewPos[0]), 14)
+        drawText(920, 170, str(viewPos[1]), 14)
 
-    if(log_mode==False and ln_mode==False):
-       intensity=500
-       #Draw geometric shapes for the ATAN scales to investigate angular alignments.
-       draw_circle(1,8,0.1,3,360,5,[106/intensity,27/intensity,154/intensity])#TRIANGLE
-       draw_circle(1,8,0.101,4,360,5,[0/intensity,150/intensity,136/intensity])#SQUARE
-       draw_circle(1,8,0.102,5,360,5,[158/intensity,157/intensity,36/intensity])#PENTAGON
-       draw_circle(1,8,0.103,7,360,5,[51/intensity, 105/intensity, 30/intensity])#HEPTAGON
+    if (log_mode == False and ln_mode == False):
+        intensity = 500
+        # Draw geometric shapes for the ATAN scales to investigate angular alignments.
+        draw_circle(1, 8, 0.1, 3, 360, 5, [106 / intensity, 27 / intensity, 154 / intensity])  # TRIANGLE
+        draw_circle(1, 8, 0.101, 4, 360, 5, [0 / intensity, 150 / intensity, 136 / intensity])  # SQUARE
+        draw_circle(1, 8, 0.102, 5, 360, 5, [158 / intensity, 157 / intensity, 36 / intensity])  # PENTAGON
+        draw_circle(1, 8, 0.103, 7, 360, 5, [51 / intensity, 105 / intensity, 30 / intensity])  # HEPTAGON
 
     else:
-       #Draw a pointer when in log mode
-       glPushMatrix()
-       glTranslatef(7, 0, 0.0)
-       draw_circle(1,1,0.1,3,360,5,[0.2,0.1,0.1])#TRIANGLE
-       glPopMatrix()
+        # Draw a pointer when in log mode
+        glPushMatrix()
+        glTranslatef(7, 0, 0.0)
+        draw_circle(1, 1, 0.1, 3, 360, 5, [0.2, 0.1, 0.1])  # TRIANGLE
+        glPopMatrix()
 
-    #draw_circle(1,8,0.9,7,360,5,[0.2,0,0.1])#Octagon Inner Background
-    draw_circle(12,13.5,1.0,11,360,5,[0.1,0,0.1])#Hendecagon Outer Background
-
+    # draw_circle(1,8,0.9,7,360,5,[0.2,0,0.1])#Octagon Inner Background
+    draw_circle(12, 13.5, 1.0, 11, 360, 5, [0.1, 0, 0.1])  # Hendecagon Outer Background
 
     if (not log_mode and not ln_mode):
-        #Marker for 23 degrees which is maximum angle for polarisation entanglement
-        draw_radial(12,13,hght,30,wd,23+120,[1,1,0],0.5)
-        draw_radial(12,13,hght,30,wd,120,[1,1,0],0.5)
-        #Marker for 23 degrees which is maximum angle for polarisation entanglement
-        draw_radial(12,13,hght,30,wd,90,[1,1,0],0.5)
-        draw_radial(12,13,hght,30,wd,90+23,[1,1,0],0.5)
+        # Marker for 23 degrees which is maximum angle for polarisation entanglement
+        draw_radial(12, 13, hght, 30, wd, 23 + 120, [1, 1, 0], 0.5)
+        draw_radial(12, 13, hght, 30, wd, 120, [1, 1, 0], 0.5)
+        # Marker for 23 degrees which is maximum angle for polarisation entanglement
+        draw_radial(12, 13, hght, 30, wd, 90, [1, 1, 0], 0.5)
+        draw_radial(12, 13, hght, 30, wd, 90 + 23, [1, 1, 0], 0.5)
 
-    #Make spokes narrower when zoomed in
-    spoke_width=0.5
-    if(zoom_distance>-30):
-       spoke_width=((-zoom_distance-3)/(30-4))*0.6
-       mouse_ang_width=spoke_width+0.1
+    # Make spokes narrower when zoomed in
+    spoke_width = 0.5
+    if (zoom_distance > -30):
+        spoke_width = ((-zoom_distance - 3) / (30 - 4)) * 0.6
+        mouse_ang_width = spoke_width + 0.1
 
-    #Music mode
-    #Draw a colour wheel 
-    #See: https://pdfs.semanticscholar.org/e576/b8da181ff3e598618dfe440bb5c5904f61a2.pdf
-    if (mode_state==3):
-        for octave in range(-1,10):
-            svara=0
+    # Music mode
+    # Draw a colour wheel
+    # See: https://pdfs.semanticscholar.org/e576/b8da181ff3e598618dfe440bb5c5904f61a2.pdf
+    if (mode_state == 3):
+        for octave in range(-1, 10):
+            svara = 0
             for note_name in svara_note:
-                freq=svara_pitch[svara]
-                svara+=1
-                note=freq/256 #Normalise to C
-                angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor
-                drawTextRadial(13.3,angle_deg,note_name,0.0015,yellow)
-                draw_radial(13.1,13.2,hght-0.6,slice,wd,angle_deg,yellow,0.1)
+                freq = svara_pitch[svara]
+                svara += 1
+                note = freq / 256  # Normalise to C
+                angle_deg = (math.log(note * math.pow(2, octave)) / log_base_music) / factor
+                drawTextRadial(13.3, angle_deg, note_name, 0.0015, yellow)
+                draw_radial(13.1, 13.2, hght - 0.6, slice, wd, angle_deg, yellow, 0.1)
 
-
-        for octave in range(-1,10):
-            note_index=0
+        for octave in range(-1, 10):
+            note_index = 0
             for note in music_pitch:
-                note=note/261.63 #Normalise to C
-                angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor
-                drawTextRadial(11.9,angle_deg,music_note[note_index],0.0015,yellow)
-                if(octave==-1):
-                    drawTextRadial(13.8,angle_deg,music_intervals[note_index],0.0015,yellow)
-                if(octave==0):
-                    drawTextRadial(13.8,angle_deg,music_intervals[note_index+12],0.0015,yellow)
+                note = note / 261.63  # Normalise to C
+                angle_deg = (math.log(note * math.pow(2, octave)) / log_base_music) / factor
+                drawTextRadial(11.9, angle_deg, music_note[note_index], 0.0015, yellow)
+                if (octave == -1):
+                    drawTextRadial(13.8, angle_deg, music_intervals[note_index], 0.0015, yellow)
+                if (octave == 0):
+                    drawTextRadial(13.8, angle_deg, music_intervals[note_index + 12], 0.0015, yellow)
 
-                draw_radial(11.7,11.8,hght-0.6,slice,wd,angle_deg,yellow,0.1)
-                drawTextRadial(6.8,angle_deg-rotation/5,music_note[note_index],0.0015,yellow)
-                draw_radial(6.7,6.79,hght-0.6,slice,wd,angle_deg-rotation/5,yellow,0.1)
-                note_index+=1
+                draw_radial(11.7, 11.8, hght - 0.6, slice, wd, angle_deg, yellow, 0.1)
+                drawTextRadial(6.8, angle_deg - rotation / 5, music_note[note_index], 0.0015, yellow)
+                draw_radial(6.7, 6.79, hght - 0.6, slice, wd, angle_deg - rotation / 5, yellow, 0.1)
+                note_index += 1
 
-        note_num=0
-        note_num2_persist=6 #black
-        note_num3_persist=3 #black
-        note_num4_persist=0 #black
-        for octave in range(-1,10):
-           for note in [1.0,1.0535,1.1250,1.1852,1.2656,1.3333,1.4142,1.5000,1.5803,1.6875,1.7778,1.8984]:
-                angle_deg=(math.log(note*math.pow(2,octave))/log_base_music)/factor-0.2
-                angle_deg_triplet=angle_deg
-                note_num1=note_num%12
-                if (octave>=0):
-                    draw_radial(6,6.65,hght-0.6,slice,wd,angle_deg-rotation/5,music_colours[note_num1],1)
-      
-                note_num5=note_num
-                note_num2=note_num5%4
-                #Triplet
-                if (note_num2==0):
-                    note_num2_persist+=3
-                    if(note_num2_persist>=9):
-                       note_num2_persist=0
-                #Triplet of triplets
-                note_num3=note_num5%12
-                if (note_num3==0):
-                    note_num3_persist+=3
-                    if(note_num3_persist>=9):
-                       note_num3_persist=0
-                #Triplet of triplet of triplets
-                note_num4=(note_num5-12)%36
-                if (note_num4==0 and octave>0):
-                    note_num4_persist+=3
-                    if(note_num4_persist>=9):
-                       note_num4_persist=0
-                if (octave>=0):
-                    draw_radial(5,5.95,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num2_persist],2.7)
-                    draw_radial(4,4.95,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num3_persist],2.7)
-                    draw_radial(3,3.95,hght,slice,wd,angle_deg_triplet-rotation/5,music_colours[note_num4_persist],2.7)
-                note_num+=1
+        note_num = 0
+        note_num2_persist = 6  # black
+        note_num3_persist = 3  # black
+        note_num4_persist = 0  # black
+        for octave in range(-1, 10):
+            for note in [1.0, 1.0535, 1.1250, 1.1852, 1.2656, 1.3333, 1.4142, 1.5000, 1.5803, 1.6875, 1.7778, 1.8984]:
+                angle_deg = (math.log(note * math.pow(2, octave)) / log_base_music) / factor - 0.2
+                angle_deg_triplet = angle_deg
+                note_num1 = note_num % 12
+                if (octave >= 0):
+                    draw_radial(6, 6.65, hght - 0.6, slice, wd, angle_deg - rotation / 5, music_colours[note_num1], 1)
 
+                note_num5 = note_num
+                note_num2 = note_num5 % 4
+                # Triplet
+                if (note_num2 == 0):
+                    note_num2_persist += 3
+                    if (note_num2_persist >= 9):
+                        note_num2_persist = 0
+                # Triplet of triplets
+                note_num3 = note_num5 % 12
+                if (note_num3 == 0):
+                    note_num3_persist += 3
+                    if (note_num3_persist >= 9):
+                        note_num3_persist = 0
+                # Triplet of triplet of triplets
+                note_num4 = (note_num5 - 12) % 36
+                if (note_num4 == 0 and octave > 0):
+                    note_num4_persist += 3
+                    if (note_num4_persist >= 9):
+                        note_num4_persist = 0
+                if (octave >= 0):
+                    draw_radial(5, 5.95, hght, slice, wd, angle_deg_triplet - rotation / 5,
+                                music_colours[note_num2_persist], 2.7)
+                    draw_radial(4, 4.95, hght, slice, wd, angle_deg_triplet - rotation / 5,
+                                music_colours[note_num3_persist], 2.7)
+                    draw_radial(3, 3.95, hght, slice, wd, angle_deg_triplet - rotation / 5,
+                                music_colours[note_num4_persist], 2.7)
+                note_num += 1
 
-    for (const_name,log_const,angle_deg,const_colour,geometry,symbol,source,value,uncertainty,units,category,subcategory,gradule) in constants:
+    for (const_name, log_const, angle_deg, const_colour, geometry, symbol, source, value, uncertainty, units, category,
+         subcategory, gradule) in constants:
 
-       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==2) and len(symbol)>0)):
-           draw_radial(8+gradule,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,spoke_width)
-           draw_radial(10-overlap,12-gradule,hght,slice,wd,angle_deg,const_colour,spoke_width)
-           #draw_radial(9+gradule,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,spoke_width)
+        if (disp_symbol == 0 or ((disp_symbol == 1 or disp_symbol == 2) and len(symbol) > 0)):
+            draw_radial(8 + gradule, 10 + overlap, hght, slice, wd, angle_deg - rotation / 5, const_colour, spoke_width)
+            draw_radial(10 - overlap, 12 - gradule, hght, slice, wd, angle_deg, const_colour, spoke_width)
+            # draw_radial(9+gradule,10+overlap,hght,slice,wd,angle_deg-rotation/5,const_colour,spoke_width)
 
-           #Detect mouse over constant
-           draw_text=False
-           if(mouse_radial[0]>=5 and mouse_radial[0]<10):
-              if(angle_difference(mouse_radial[1],(angle_deg-rotation/5))<mouse_ang_width):
-                 draw_text=True
-           if(mouse_radial[0]>=10 and mouse_radial[0]<14):
-              if(angle_difference(mouse_radial[1],angle_deg)<mouse_ang_width):
-                 draw_text=True
-           
-           #Draw the text on the left hand side for the constants
-           if (draw_text==True and detail_offset<700 and mode_state!=3):
-              drawText(20,detail_offset,value+ " " + units,20)
-              if (symbol in const_name): 
-                  symbol_disp="" 
-              else: 
-                  symbol_disp=symbol
-              drawText(20,detail_offset+30,const_name+ "    " +symbol_disp,20) 
-              drawText(20,detail_offset+60,"Source: " +source,12)
-              detail_offset+=100
+            # Detect mouse over constant
+            draw_text = False
+            if (mouse_radial[0] >= 5 and mouse_radial[0] < 10):
+                if (angle_difference(mouse_radial[1], (angle_deg - rotation / 5)) < mouse_ang_width):
+                    draw_text = True
+            if (mouse_radial[0] >= 10 and mouse_radial[0] < 14):
+                if (angle_difference(mouse_radial[1], angle_deg) < mouse_ang_width):
+                    draw_text = True
 
+            # Draw the text on the left hand side for the constants
+            if (draw_text == True and detail_offset < 700 and mode_state != 3):
+                drawText(20, detail_offset, value + " " + units, 20)
+                if (symbol in const_name):
+                    symbol_disp = ""
+                else:
+                    symbol_disp = symbol
+                drawText(20, detail_offset + 30, const_name + "    " + symbol_disp, 20)
+                drawText(20, detail_offset + 60, "Source: " + source, 12)
+                detail_offset += 100
 
-       #The horizontal text displayed at the geometrical points of the outer wheel
-       if(geometry>0 and geometry<6):
-          drawTextRadialHoriz(14,angle_deg, const_name) #Fast 
-          # drawTextRadialPts(12.5,angle_deg, symbol,18) #Slow, shows utf-16
-          # drawText(13.7,angle_deg, const_name) #Fast, but does not show utf-16
-          rad_len=13.5
-       else:
-          rad_len=12
+        # The horizontal text displayed at the geometrical points of the outer wheel
+        if (geometry > 0 and geometry < 6):
+            drawTextRadialHoriz(14, angle_deg, const_name)  # Fast
+            # drawTextRadialPts(12.5,angle_deg, symbol,18) #Slow, shows utf-16
+            # drawText(13.7,angle_deg, const_name) #Fast, but does not show utf-16
+            rad_len = 13.5
+        else:
+            rad_len = 12
 
-       rad_len-=gradule*2.0
+        rad_len -= gradule * 2.0
 
-       #Text to display on start-up zoom setting
-       if (zoom_location>-1000 or disp_symbol==2):
-          text_offset=0.3
+        # Text to display on start-up zoom setting
+        if (zoom_location > -1000 or disp_symbol == 2):
+            text_offset = 0.3
 
-          #Count overlap of text
-          extra_overlap=0
-          if(mode_state!=3):
-              for ang in last_angle:
-                  if (abs(ang-angle_deg)<0.2):
-                     extra_overlap+=0.5
+            # Count overlap of text
+            extra_overlap = 0
+            if (mode_state != 3):
+                for ang in last_angle:
+                    if (abs(ang - angle_deg) < 0.2):
+                        extra_overlap += 0.5
 
-          #Work out offset for inner labels
-          if (log_mode==True):
-              extra_offset=-3-len(symbol)*0.0015-extra_overlap
-          elif (ln_mode==True):
-              extra_offset=-3-len(symbol)*0.0015
-          else:
-              extra_offset=0
+            # Work out offset for inner labels
+            if (log_mode == True):
+                extra_offset = -3 - len(symbol) * 0.0015 - extra_overlap
+            elif (ln_mode == True):
+                extra_offset = -3 - len(symbol) * 0.0015
+            else:
+                extra_offset = 0
 
-          #outer label
-          drawTextRadial(12+text_offset+extra_overlap,angle_deg, symbol,0.0015,yellow)
-          #inner label
-          drawTextRadial(10+text_offset+extra_offset,angle_deg-rotation/5,symbol,0.0015,yellow)
+            # outer label
+            drawTextRadial(12 + text_offset + extra_overlap, angle_deg, symbol, 0.0015, yellow)
+            # inner label
+            drawTextRadial(10 + text_offset + extra_offset, angle_deg - rotation / 5, symbol, 0.0015, yellow)
 
-       if (disp_symbol==0 or ((disp_symbol==1 or disp_symbol==2) and len(symbol)>0) or rad_len==13.5):
-          #Draw outer circle spokes
-          draw_radial(10-overlap,rad_len,hght,slice,wd,angle_deg,const_colour,spoke_width)
+        if (disp_symbol == 0 or ((disp_symbol == 1 or disp_symbol == 2) and len(symbol) > 0) or rad_len == 13.5):
+            # Draw outer circle spokes
+            draw_radial(10 - overlap, rad_len, hght, slice, wd, angle_deg, const_colour, spoke_width)
 
-    for ind in [4,0,-1]:
-       last_angle[ind+1]=last_angle[ind]
-    last_angle[0]=angle_deg
+    for ind in [4, 0, -1]:
+        last_angle[ind + 1] = last_angle[ind]
+    last_angle[0] = angle_deg
 
-    if(zooming_complete):
-          help_display()
+    if (zooming_complete):
+        help_display()
 
     for box in input_boxes:
-            box.draw(screen)
+        box.draw(screen)
     pygame.display.flip()
+
 
 # =============================================================================
 # Help Banner
 # =============================================================================
 
 def request_help():
-   global help_state, help_scaling 
-   help_state=0
-   if (help_state==0 or help_state==3):
-       help_scaling=100
+    global help_state, help_scaling
+    help_state = 0
+    if (help_state == 0 or help_state == 3):
+        help_scaling = 100
+
 
 def help_display():
-   global help_state, help_scaling
-   if (help_state>1):
-      return True
-   if (help_state==0):
-      help_state+=1
+    global help_state, help_scaling
+    if (help_state > 1):
+        return True
+    if (help_state == 0):
+        help_state += 1
 
-   help_scaling-=10
-   if (help_scaling)<0:
-      help_scaling=0
+    help_scaling -= 10
+    if (help_scaling) < 0:
+        help_scaling = 0
 
-   help_x=230+help_scaling
-   help_y=610-(help_scaling*3)
-   fs=int(18*(100-help_scaling)/100)
-   vert_space=20*(100-help_scaling)/100
-   drawText(help_x,help_y-0*vert_space,"Circular logarithmic slide rule for fundamental physical constants",fs+2)
-   drawText(help_x,help_y-3*vert_space," z,x = rotate the inner slide rule wheel",fs)
-   drawText(help_x,help_y-4*vert_space," c,d = zoom in/out",fs)
-   drawText(help_x,help_y-5*vert_space," q = return to 0 degree rotation point",fs)
-   drawText(help_x,help_y-6*vert_space," w = return to -180 degree rotation point",fs)
-   drawText(help_x,help_y-7*vert_space," e = cancel zoom",fs)
-   drawText(help_x,help_y-8*vert_space," 1,2,3,4,5,6,7,8,9,0 = zoom on sectors of the circular slide rule",fs)
-   drawText(help_x,help_y-9*vert_space," s = pan in positive direction around the wheel",fs)
+    help_x = 230 + help_scaling
+    help_y = 610 - (help_scaling * 3)
+    fs = int(18 * (100 - help_scaling) / 100)
+    vert_space = 20 * (100 - help_scaling) / 100
+    drawText(help_x, help_y - 0 * vert_space, "Circular logarithmic slide rule for fundamental physical constants",
+             fs + 2)
+    drawText(help_x, help_y - 3 * vert_space, " z,x = rotate the inner slide rule wheel", fs)
+    drawText(help_x, help_y - 4 * vert_space, " c,d = zoom in/out", fs)
+    drawText(help_x, help_y - 5 * vert_space, " q = return to 0 degree rotation point", fs)
+    drawText(help_x, help_y - 6 * vert_space, " w = return to -180 degree rotation point", fs)
+    drawText(help_x, help_y - 7 * vert_space, " e = cancel zoom", fs)
+    drawText(help_x, help_y - 8 * vert_space, " 1,2,3,4,5,6,7,8,9,0 = zoom on sectors of the circular slide rule", fs)
+    drawText(help_x, help_y - 9 * vert_space, " s = pan in positive direction around the wheel", fs)
 
-   drawText(help_x,help_y-11*vert_space," f = toggle symbol modes (including number of constants)",fs)
+    drawText(help_x, help_y - 11 * vert_space, " f = toggle symbol modes (including number of constants)", fs)
 
-   drawText(help_x,help_y-13*vert_space," [ ] - + = slide rule cursor",fs)
-   drawText(help_x,help_y-14*vert_space," a = toggle mode: LSPR, arctangent log, natural log, log base12",fs)
+    drawText(help_x, help_y - 13 * vert_space, " [ ] - + = slide rule cursor", fs)
+    drawText(help_x, help_y - 14 * vert_space, " a = toggle mode: LSPR, arctangent log, natural log, log base12", fs)
 
+    drawText(help_x, help_y - 17.5 * vert_space, " r,t,y,u,i - experimental arctan/ln scaling factors", fs)
+    drawText(help_x, help_y - 18.5 * vert_space, " v,b - demo modes", fs)
 
-   drawText(help_x,help_y-17.5*vert_space," r,t,y,u,i - experimental arctan/ln scaling factors",fs)
-   drawText(help_x,help_y-18.5*vert_space," v,b - demo modes",fs)
-
-   drawText(help_x,help_y-20*vert_space," k,l = course adjust factor for arctan scaling",fs)
-   drawText(help_x,help_y-21*vert_space," n,m = fine adjust factor for arctan scaling",fs)
-   drawText(help_x,help_y-22*vert_space," h=help",fs)
-   drawText(help_x,help_y-23*vert_space,"                         --------> Press Any Key To Continue... <--------",fs)
+    drawText(help_x, help_y - 20 * vert_space, " k,l = course adjust factor for arctan scaling", fs)
+    drawText(help_x, help_y - 21 * vert_space, " n,m = fine adjust factor for arctan scaling", fs)
+    drawText(help_x, help_y - 22 * vert_space, " h=help", fs)
+    drawText(help_x, help_y - 23 * vert_space,
+             "                         --------> Press Any Key To Continue... <--------", fs)
 
 
 # =============================================================================
 # Main Code
 # =============================================================================
 
-read_csv() # Read the fundamental constants into a list
-constants=fundamental_constants
+read_csv()  # Read the fundamental constants into a list
+constants = fundamental_constants
 
 pygame.init()
 request_help()
 
-(width, height) = (1080,800) #(800, 600)
+(width, height) = (1080, 800)  # (800, 600)
 screen = pygame.display.set_mode((width, height), OPENGL | DOUBLEBUF)
 clock = pygame.time.Clock()
 font = pygame.font.SysFont('arial', 12)
@@ -890,9 +942,9 @@ done = False
 glEnable(GL_BLEND)
 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-rotate=1
-zoom_location=-1000
-disp_symbol=1
+rotate = 1
+zoom_location = -1000
+disp_symbol = 1
 
 while True:
 
@@ -908,215 +960,215 @@ while True:
         box.update()
 
     keypress = pygame.key.get_pressed()
-    req_update=True
+    req_update = True
 
-    prev_zoom_location=zoom_location
+    prev_zoom_location = zoom_location
 
-    if(help_state==1):
-        #Check all keys to continue after help screen
-        pressed=False
+    if (help_state == 1):
+        # Check all keys to continue after help screen
+        pressed = False
         for keys in keypress:
-            if(keys==True):
-                pressed=True
-        if (pressed==True):
-            help_state+=1
-            default_zoom=after_help_zoom
-            zoom_distance=default_zoom
-            zoom_location=-1000
-            mpos=[0,0] #Reset mouse position
+            if (keys == True):
+                pressed = True
+        if (pressed == True):
+            help_state += 1
+            default_zoom = after_help_zoom
+            zoom_distance = default_zoom
+            zoom_location = -1000
+            mpos = [0, 0]  # Reset mouse position
 
-    #TODO: This becomes a case statement in Python3.10
+    # TODO: This becomes a case statement in Python3.10
     if keypress[pygame.K_z]:
-       rotation += 1.0
-       rotate=0
+        rotation += 1.0
+        rotate = 0
     elif keypress[pygame.K_x]:
-       rotation -= 1.0
-       rotate=0
+        rotation -= 1.0
+        rotate = 0
     elif keypress[pygame.K_q]:
-       rotation = 0.0
-       rotate=0
-       zoom_distance=default_zoom
-       zoom_location=-1000
+        rotation = 0.0
+        rotate = 0
+        zoom_distance = default_zoom
+        zoom_location = -1000
     elif keypress[pygame.K_w]:
-       rotation = 180.0*5
-       rotate=0
-       zoom_distance=default_zoom
-       zoom_location=-1000
+        rotation = 180.0 * 5
+        rotate = 0
+        zoom_distance = default_zoom
+        zoom_location = -1000
     elif keypress[pygame.K_e]:
-       zoom_distance=default_zoom
-       zoom_location=-1000
+        zoom_distance = default_zoom
+        zoom_location = -1000
     elif keypress[pygame.K_r]:
-       if (log_mode or ln_mode):
-          factor=1.0
-       else:
-          factor=9.5*math.sqrt(2)
-       adjust_factors()
+        if (log_mode or ln_mode):
+            factor = 1.0
+        else:
+            factor = 9.5 * math.sqrt(2)
+        adjust_factors()
     elif keypress[pygame.K_t]:
-       if (log_mode or ln_mode):
-           factor=0.75    
-       else:
-           factor=19*math.sqrt(2)
-       adjust_factors()
+        if (log_mode or ln_mode):
+            factor = 0.75
+        else:
+            factor = 19 * math.sqrt(2)
+        adjust_factors()
     elif keypress[pygame.K_y]:
-       if (log_mode or ln_mode):
-           factor=1/math.sqrt(2)
-       else:
-           factor=57.206
-       adjust_factors()
+        if (log_mode or ln_mode):
+            factor = 1 / math.sqrt(2)
+        else:
+            factor = 57.206
+        adjust_factors()
     elif keypress[pygame.K_u]:
-       if (log_mode or ln_mode):
-           factor=1/math_phi
-       else:
-           factor=(30)*math.sqrt(5)
-       adjust_factors()
+        if (log_mode or ln_mode):
+            factor = 1 / math_phi
+        else:
+            factor = (30) * math.sqrt(5)
+        adjust_factors()
     elif keypress[pygame.K_i]:
-       if (log_mode or ln_mode):
-           factor=0.5
-       else:
-          factor=82.37
-       adjust_factors()
+        if (log_mode or ln_mode):
+            factor = 0.5
+        else:
+            factor = 82.37
+        adjust_factors()
     elif keypress[pygame.K_a]:
-       if((pygame.time.get_ticks()-mode_change)>200):
-           mode_state+=1
-           if (mode_state>3):
-               mode_state=0
-           if(mode_state==0):
-               constants=fundamental_constants
-               log_mode=True
-               ln_mode=False
-               factor=1.0
-           elif(mode_state==1):
-               constants=fundamental_constants
-               factor=19*math.sqrt(2)
-               log_mode=False
-               ln_mode=False
-           elif(mode_state==2):
-               constants=ln_constants
-               ln_mode=True
-               log_mode=False
-               factor=0.1
-           elif(mode_state==3):
-               constants=music_constants
-               ln_mode=True
-               log_mode=False
-               factor=0.01
-           demo_mode=False
-           adjust_factors()
-           #print (mode_state)
-           mode_change=pygame.time.get_ticks()
+        if ((pygame.time.get_ticks() - mode_change) > 200):
+            mode_state += 1
+            if (mode_state > 3):
+                mode_state = 0
+            if (mode_state == 0):
+                constants = fundamental_constants
+                log_mode = True
+                ln_mode = False
+                factor = 1.0
+            elif (mode_state == 1):
+                constants = fundamental_constants
+                factor = 19 * math.sqrt(2)
+                log_mode = False
+                ln_mode = False
+            elif (mode_state == 2):
+                constants = ln_constants
+                ln_mode = True
+                log_mode = False
+                factor = 0.1
+            elif (mode_state == 3):
+                constants = music_constants
+                ln_mode = True
+                log_mode = False
+                factor = 0.01
+            demo_mode = False
+            adjust_factors()
+            # print (mode_state)
+            mode_change = pygame.time.get_ticks()
     elif keypress[pygame.K_s]:
-       if((pygame.time.get_ticks()-mode_change)>200):
-           zoom_location+=5
-           if(zoom_location)>180:
-               zoom_location-=360
-           mode_change=pygame.time.get_ticks()
+        if ((pygame.time.get_ticks() - mode_change) > 200):
+            zoom_location += 5
+            if (zoom_location) > 180:
+                zoom_location -= 360
+            mode_change = pygame.time.get_ticks()
     elif keypress[pygame.K_j]:
-       constants=ln_constants
-       ln_mode=True
-       log_mode=False
-       demo_mode=False
-       factor=0.1
-       adjust_factors()
+        constants = ln_constants
+        ln_mode = True
+        log_mode = False
+        demo_mode = False
+        factor = 0.1
+        adjust_factors()
     elif keypress[pygame.K_k]:
-       factor+=0.1
-       adjust_factors()
+        factor += 0.1
+        adjust_factors()
     elif keypress[pygame.K_l]:
-       factor-=0.1
-       adjust_factors()
+        factor -= 0.1
+        adjust_factors()
     elif keypress[pygame.K_n]:
-       factor+=0.01
-       adjust_factors()
+        factor += 0.01
+        adjust_factors()
     elif keypress[pygame.K_m]:
-       factor-=0.01
-       adjust_factors()
+        factor -= 0.01
+        adjust_factors()
     elif keypress[pygame.K_1]:
-       zoom_location=0
+        zoom_location = 0
     elif keypress[pygame.K_2]:
-       zoom_location=30
+        zoom_location = 30
     elif keypress[pygame.K_3]:
-       zoom_location=-30
+        zoom_location = -30
     elif keypress[pygame.K_4]:
-       zoom_location=90
+        zoom_location = 90
     elif keypress[pygame.K_5]:
-       zoom_location=-90
+        zoom_location = -90
     elif keypress[pygame.K_6]:
-       zoom_location=120
+        zoom_location = 120
     elif keypress[pygame.K_7]:
-       zoom_location=-120
+        zoom_location = -120
     elif keypress[pygame.K_8]:
-       zoom_location=144
+        zoom_location = 144
     elif keypress[pygame.K_9]:
-       zoom_location=-144
+        zoom_location = -144
     elif keypress[pygame.K_0]:
-       zoom_location=180
+        zoom_location = 180
     elif keypress[pygame.K_f]:
-       if((pygame.time.get_ticks()-mode_change)>200):
-           disp_symbol+=1
-           if (disp_symbol>2):
-              disp_symbol=0
-           mode_change=pygame.time.get_ticks()
+        if ((pygame.time.get_ticks() - mode_change) > 200):
+            disp_symbol += 1
+            if (disp_symbol > 2):
+                disp_symbol = 0
+            mode_change = pygame.time.get_ticks()
     elif keypress[pygame.K_v]:
-       demo_mode=True
-       rotate=1
+        demo_mode = True
+        rotate = 1
     elif keypress[pygame.K_RIGHTBRACKET]:
-       cursor_angle+=cursor_step
-       if(cursor_angle>180):
-           cursor_angle=-180
-       cursor_step+=0.01
-       if (cursor_step>2):
-           cursor_step=2
+        cursor_angle += cursor_step
+        if (cursor_angle > 180):
+            cursor_angle = -180
+        cursor_step += 0.01
+        if (cursor_step > 2):
+            cursor_step = 2
     elif keypress[pygame.K_LEFTBRACKET]:
-       cursor_angle-=cursor_step
-       if(cursor_angle<-180):
-           cursor_angle=180
-       cursor_step+=0.01
-       if (cursor_step>2):
-           cursor_step=2
+        cursor_angle -= cursor_step
+        if (cursor_angle < -180):
+            cursor_angle = 180
+        cursor_step += 0.01
+        if (cursor_step > 2):
+            cursor_step = 2
     elif keypress[pygame.K_EQUALS]:
-       cursor_angle=0
+        cursor_angle = 0
     elif keypress[pygame.K_MINUS]:
-       cursor_angle=180
+        cursor_angle = 180
     elif keypress[pygame.K_b]:
-       demo_mode=False
-       rotate=0
+        demo_mode = False
+        rotate = 0
     elif keypress[pygame.K_d]:
-       if (zoom_location!=-1000):
-          zoom_distance=zoom_distance+1
-          if(zoom_distance>-4):
-             zoom_distance=-4
-       else:
-          zoom_location=180
+        if (zoom_location != -1000):
+            zoom_distance = zoom_distance + 1
+            if (zoom_distance > -4):
+                zoom_distance = -4
+        else:
+            zoom_location = 180
     elif keypress[pygame.K_c]:
-       if (zoom_location!=-1000):
-          zoom_distance=zoom_distance-1
-          if(zoom_distance<-99):
-             zoom_distance=-99
-       else:
-          zoom_location=180
+        if (zoom_location != -1000):
+            zoom_distance = zoom_distance - 1
+            if (zoom_distance < -99):
+                zoom_distance = -99
+        else:
+            zoom_location = 180
     elif keypress[pygame.K_h]:
-       request_help()
-       zoom_distance=help_zoom
-       default_zoom=help_zoom
-       zoom_location=-1000
+        request_help()
+        zoom_distance = help_zoom
+        default_zoom = help_zoom
+        zoom_location = -1000
     else:
-       cursor_step=0.1
-       #Only rotate if no keys pressed
-       rotation += rotate
-       if (int(rotate*1000)!=0):
-         req_update=True
-       else:
-         req_update=False
+        cursor_step = 0.1
+        # Only rotate if no keys pressed
+        rotation += rotate
+        if (int(rotate * 1000) != 0):
+            req_update = True
+        else:
+            req_update = False
 
-    #Focus after a zoom change
-    if (zoom_location!=prev_zoom_location):
-        zoom_distance=-20
-        mpos=[0,0]
+    # Focus after a zoom change
+    if (zoom_location != prev_zoom_location):
+        zoom_distance = -20
+        mpos = [0, 0]
 
     if (check_mouse()):
-       req_update=True
+        req_update = True
 
     if (req_update or zooming):
-       update_display()
-    
+        update_display()
+
     clock.tick(60)
-    pygame.event.pump() # process event queue
+    pygame.event.pump()  # process event queue
